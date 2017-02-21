@@ -1,0 +1,1 @@
+-g -Wall   -I. -I /data/yuzhigang/standard/qsdk/qca/src/linux-3.14/tools/lib/traceevent/../../include    -D_GNU_SOURCE:arm:arm-openwrt-linux-uclibcgnueabi-

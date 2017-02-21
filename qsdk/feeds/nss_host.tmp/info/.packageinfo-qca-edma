@@ -1,0 +1,20 @@
+Source-Makefile: feeds/nss_host/qca-edma/Makefile
+Package: kmod-qca-edma
+Submenu: Network Devices
+Version: <LINUX_VERSION>-1
+Depends: 
+Conflicts: 
+Menu-Depends: 
+Provides: 
+Section: kernel
+Category: Kernel modules
+Title: QCA IPQ40xx ethernet driver
+Maintainer: 
+Source: 
+Type: ipkg
+Kernel-Config: CONFIG_NET_VENDOR_QCOM=y CONFIG_ESSEDMA
+Description:      Kernel modules for IPQ40xx integrated ethernet adapater.
+
+@@
+
+

@@ -1,0 +1,8 @@
+Package: perf
+Version: 3.14.77-2
+Depends: libc, libelf1, libdw, libpthread, librt, binutils
+Source: package/devel/perf
+Section: devel
+Architecture: ipq806x
+Installed-Size: 380981
+Description:  perf is the Linux performance monitoring tool

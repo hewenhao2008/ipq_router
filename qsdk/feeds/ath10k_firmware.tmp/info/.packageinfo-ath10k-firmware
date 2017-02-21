@@ -1,0 +1,44 @@
+Source-Makefile: feeds/ath10k_firmware/ath10k-firmware/Makefile
+Package: ath10k-firmware
+Version: g-1
+Depends: +libc +SSP_SUPPORT:libssp +USE_GLIBC:librt +USE_GLIBC:libpthread 
+Conflicts: 
+Menu-Depends: 
+Provides: 
+Section: firmware
+Category: Firmware
+Title: QCA ath10k firmware
+Maintainer: 
+Source: 
+Type: ipkg
+Description:   This package contains the ATH10k Firmware binaries
+
+@@
+Config:
+   	menu "overwrite package version"
+		depends on PACKAGE_ath10k-firmware
+	config ath10k-firmware_USE_CUSTOM_VERSION
+		depends on PACKAGE_ath10k-firmware
+		bool "Use custom package version"
+		default n
+
+	config ath10k-firmware_CUSTOM_VERSION
+		depends on ath10k-firmware_USE_CUSTOM_VERSION
+		string "ath10k-firmware version as string (default version: )"
+		default ""
+
+	endmenu
+   	menu "custom source directory"
+		depends on PACKAGE_ath10k-firmware
+	config ath10k-firmware_USE_CUSTOM_SOURCE_DIR
+		depends on PACKAGE_ath10k-firmware
+		bool "Use custom source directory"
+		default n
+	config ath10k-firmware_CUSTOM_SOURCE_DIR
+		depends on ath10k-firmware_USE_CUSTOM_SOURCE_DIR
+		string "Custom source directory"
+		default ""
+	endmenu
+@@
+
+
