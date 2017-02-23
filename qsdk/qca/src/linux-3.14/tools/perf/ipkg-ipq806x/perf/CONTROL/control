@@ -4,5 +4,5 @@ Depends: libc, libelf1, libdw, libpthread, librt, binutils
 Source: package/devel/perf
 Section: devel
 Architecture: ipq806x
-Installed-Size: 380981
+Installed-Size: 381007
 Description:  perf is the Linux performance monitoring tool

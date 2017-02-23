@@ -1,5 +1,9 @@
 #include<stdlib.h>
 
+#ifndef
+#define __UCLIBC__
+#endif
+
 #if !defined(__UCLIBC__)
 #include <gnu/libc-version.h>
 #else
