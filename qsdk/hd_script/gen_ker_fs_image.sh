@@ -8,9 +8,9 @@ echo "building image contains kernel and rootfs. write to ubi section (rootfs or
 
 echo "copy files to build dir..."
 cp -rf $QSDK_PATH/qca/src/uboot-1.0/tools/pack.py 	$QCS_SPF_PATH/NHSS.QSDK.4.0/apss_proc/out/
-cp -rf TZ.BF.2.7/trustzone_images/build/ms/bin/MAZAANAA/*  $QCS_SPF_PATH/IPQ4019.ILQ.4.0/common/build/ipq
 cp -rf $QSDK_PATH/bin/ipq806x/openwrt* 	$QCS_SPF_PATH/IPQ4019.ILQ.4.0/common/build/ipq
 
+cp -rf $QCS_SPF_PATHTZ.BF.2.7/trustzone_images/build/ms/bin/MAZAANAA/*  $QCS_SPF_PATH/IPQ4019.ILQ.4.0/common/build/ipq
 
 #cp BOOT.BF.3.1.1/boot_images/build/ms/bin/40xx/misc/tools/config/boardconfig_premium  IPQ4019.ILQ.4.0/common/build/ipq 
 #cp BOOT.BF.3.1.1/boot_images/build/ms/bin/40xx/misc/tools/config/appsboardconfig_premium  IPQ4019.ILQ.4.0/common/build/ipq
