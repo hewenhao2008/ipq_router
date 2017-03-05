@@ -2061,23 +2061,51 @@ detect_qcawifi() {
 		echo $nss_olcfg >/lib/wifi/wifi_nss_olcfg
 		echo $nss_ol_num >/lib/wifi/wifi_nss_olnum
 		reload=1
+		mac_str=$(cat /sys/class/net/${dev}/address | sed -e 's/://g')
 		cat <<EOF
 config wifi-device  wifi$devidx
 	option type	qcawifi
 	option channel	auto
 	option macaddr	$(cat /sys/class/net/${dev}/address)
 	option hwmode	11${mode_11}
-	# REMOVE THIS LINE TO ENABLE WIFI:
+EOF
+if [ $devidx != 0 ] && [ $devidx != 1 ]; then 
+cat <<EOF
 	option disabled 1
+EOF
+fi 
+
+cat <<EOF
 
 config wifi-iface
 	option device	wifi$devidx
 	option network	lan
 	option mode	ap
-	option ssid	OpenWrt
-	option encryption none
+	option ssid	Evergrande-$(echo "${mac_str:8:4}" | tr a-z A-Z )
+	option encryption psk2
+	option key 12345678
 
 EOF
+
+if [ $devidx = 0 ]; then                                                                              
+cat <<EOF                                                                                             
+config wifi-iface                                                                                     
+        option device   wifi$devidx                                                                   
+        option network  guest_lan                                                                     
+        option mode     ap                                                                            
+        option ssid     Evergrande-guest                                                              
+        option encryption none                                                                        
+config wifi-iface                                                                                     
+        option device   wifi$devidx                                                                   
+        option network  subdev_lan                                                                    
+        option mode     ap                                                                            
+        option ssid     Evergrande-subdev
+        option hidden   '1'                                                             
+        option encryption psk2
+        option key 87654321
+
+EOF
+fi         
 	devidx=$(($devidx + 1))
 	done
 

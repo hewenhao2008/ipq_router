@@ -80,6 +80,68 @@ ap-dk07.1-c2)
 	ucidef_add_switch_ext "switch0" "QosPtMode" "3" "dscp" "enable"
 	ucidef_add_switch_ext "switch0" "QosPtMode" "4" "dscp" "enable"
 	ucidef_add_switch_ext "switch0" "QosPtMode" "5" "dscp" "enable"
+
+uci batch <<EOF
+set network.guest_lan='interface'
+set network.guest_lan.ifname='ath01'
+set network.guest_lan.force_link=1
+set network.guest_lan.type='bridge'
+set network.guest_lan.proto='static'
+set network.guest_lan.ipaddr='192.168.2.1'
+set network.guest_lan.netmask='255.255.255.0'
+set network.guest_lan.ip6assign='60'
+
+set dhcp.guest_lan="dhcp"
+set dhcp.guest_lan.interface='guest_lan'
+set dhcp.guest_lan.start='100'
+set dhcp.guest_lan.limit='150'
+set dhcp.guest_lan.leasetime='12h'
+set dhcp.guest_lan.dhcpv6='server'
+set dhcp.guest_lan.ra='server'
+
+add firewall zone
+set firewall.@zone[-1].name='guest_lan'
+add_list firewall.@zone[-1].network='guest_lan'
+set firewall.@zone[-1].input='ACCEPT'
+set firewall.@zone[-1].output='ACCEPT'
+set firewall.@zone[-1].forward='ACCEPT'
+add firewall forwarding
+set firewall.@forwarding[-1].src='guest_lan'
+set firewall.@forwarding[-1].dest='wan'
+
+set network.subdev_lan='interface'
+set network.subdev_lan.ifname='ath02'
+set network.subdev_lan.force_link=1
+set network.subdev_lan.type='bridge'
+set network.subdev_lan.proto='static'
+set network.subdev_lan.ipaddr='192.168.3.1'
+set network.subdev_lan.netmask='255.255.255.0'
+set network.subdev_lan.ip6assign='60'
+
+set dhcp.subdev_lan="dhcp"
+set dhcp.subdev_lan.interface='subdev_lan'
+set dhcp.subdev_lan.start='10'
+set dhcp.subdev_lan.limit='250'
+set dhcp.subdev_lan.leasetime='24h'
+set dhcp.subdev_lan.dhcpv6='server'
+set dhcp.subdev_lan.ra='server'
+
+add firewall zone
+set firewall.@zone[-1].name='subdev_lan'
+add_list firewall.@zone[-1].network='subdev_lan'
+set firewall.@zone[-1].input='ACCEPT'
+set firewall.@zone[-1].output='ACCEPT'
+set firewall.@zone[-1].forward='ACCEPT'
+add firewall forwarding
+set firewall.@forwarding[-1].src='subdev_lan'
+set firewall.@forwarding[-1].dest='wan'
+
+commit dhcp
+commit firewall
+
+EOF
+
+
 	;;
 ap-dk04.1-c4)
 	ucidef_set_interfaces_lan_wan "eth1" "eth0"
