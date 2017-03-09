@@ -1,153 +1,437 @@
-. /lib/ixp4xx.sh
+#
+# Copyright (C) 2011 OpenWrt.org
+#
 
-RAMFS_COPY_DATA="/lib/ixp4xx.sh"
+USE_REFRESH=1
 
-CI_BLKSZ=65536
-CI_LDADR=0x00800000
+. /lib/ipq806x.sh
+. /lib/upgrade/common.sh
 
-platform_find_partitions() {
-	local first dev size erasesize name
-	while read dev size erasesize name; do
-		name=${name#'"'}; name=${name%'"'}
-		case "$name" in
-			vmlinux.bin.l7|kernel|linux|rootfs)
-				if [ -z "$first" ]; then
-					first="$name"
-				else
-					echo "$erasesize:$first:$name"
-					break
-				fi
-			;;
-		esac
-	done < /proc/mtd
+RAMFS_COPY_DATA=/lib/ipq806x.sh
+RAMFS_COPY_BIN="/usr/bin/dumpimage /bin/mktemp /usr/sbin/mkfs.ubifs
+	/usr/sbin/ubiattach /usr/sbin/ubidetach /usr/sbin/ubiformat /usr/sbin/ubimkvol
+	/usr/sbin/ubiupdatevol /usr/bin/basename /bin/rm /usr/bin/find"
+
+#1 flash full(single) image build by qsdk.
+#0 only flash kernel fs.
+has_optional_section=0
+
+get_full_section_name() {
+	local img=$1
+	local sec=$2
+
+	dumpimage -l ${img} | grep "^ Image.*(${sec})" | \
+		sed 's,^ Image.*(\(.*\)),\1,'
 }
 
-platform_find_kernelpart() {
-	local part
-	for part in "${1%:*}" "${1#*:}"; do
-		case "$part" in
-			vmlinux.bin.l7|kernel|linux)
-				echo "$part"
-				break
-			;;
-		esac
+image_contains() {
+	local img=$1
+	local sec=$2
+	dumpimage -l ${img} | grep -q "^ Image.*(${sec}.*)" || return 1
+}
+
+#yzg: 通过dumpimage 打印FIT文件的sections。
+print_sections() {
+	local img=$1
+
+	dumpimage -l ${img} | awk '/^ Image.*(.*)/ { print gensub(/Image .* \((.*)\)/,"\\1", $0) }'
+}
+
+image_has_mandatory_section() {
+	local img=$1
+	local mandatory_sections=$2
+
+	for sec in ${mandatory_sections}; do
+		image_contains $img ${sec} || {\
+			return 1
+		}
 	done
 }
 
-platform_find_part_size() {
-	local first dev size erasesize name
-	while read dev size erasesize name; do
-		name=${name#'"'}; name=${name%'"'}
-		[ "$name" = "$1" ] && {
-			echo "$size"
-			break
+image_demux() {
+	local img=$1
+
+	for sec in $(print_sections ${img}); do
+		local fullname=$(get_full_section_name ${img} ${sec})
+
+		dumpimage -i ${img} -o /tmp/${fullname}.bin ${fullname} > /dev/null || { \
+			echo "Error while extracting \"${sec}\" from ${img}"
+			return 1
 		}
-	done < /proc/mtd
+	done
+	return 0
 }
 
-platform_do_upgrade_combined() {
-	local partitions=$(platform_find_partitions)
-	local kernelpart=$(platform_find_kernelpart "${partitions#*:}")
-	local erase_size=$((0x${partitions%%:*})); partitions="${partitions#*:}"
-	local kern_part_size=0x$(platform_find_part_size "$kernelpart")
-	local kern_part_blocks=$(($kern_part_size / $CI_BLKSZ))
-	local kern_length=0x$(dd if="$1" bs=2 skip=1 count=4 2>/dev/null)
-	local kern_blocks=$(($kern_length / $CI_BLKSZ))
-	local root_blocks=$((0x$(dd if="$1" bs=2 skip=5 count=4 2>/dev/null) / $CI_BLKSZ))
+image_is_FIT() {
+	if ! dumpimage -l $1 > /dev/null 2>&1; then
+		echo "$1 is not a valid FIT image"
+		return 1
+	fi
+	return 0
+}
 
-	v "platform_do_upgrade_combined"
-	v "partitions=$partitions"
-	v "kernelpart=$kernelpart"
-	v "kernel_part_size=$kern_part_size"
-	v "kernel_part_blocks=$kern_part_blocks"
-	v "kern_length=$kern_length"
-	v "erase_size=$erase_size"
-	v "kern_blocks=$kern_blocks"
-	v "root_blocks=$root_blocks"
-	v "kern_pad_blocks=$(($kern_part_blocks-$kern_blocks))"
+switch_layout() {
+	local layout=$1
+	local boot_layout=`find / -name boot_layout`
 
-	if [ -n "$partitions" ] && [ -n "$kernelpart" ] && \
-	   [ ${kern_blocks:-0} -gt 0 ] && \
-	   [ ${root_blocks:-0} -gt 0 ] && \
-	   [ ${erase_size:-0} -gt 0 ];
-	then
-		local append=""
-		[ -f "$CONF_TAR" -a "$SAVE_CONFIG" -eq 1 ] && append="-j $CONF_TAR"
+	# Layout switching is only required as the  boot images (up to u-boot)
+	# use 512 user data bytes per code word, whereas Linux uses 516 bytes.
+	# It's only applicable for NAND flash. So let's return if we don't have
+	# one.
 
-		# write the kernel
-		dd if="$1" bs=$CI_BLKSZ skip=1 count=$kern_blocks 2>/dev/null | \
-			mtd -F$kernelpart:$kern_part_size:$CI_LDADR write - $kernelpart
-		# write the rootfs
-		dd if="$1" bs=$CI_BLKSZ skip=$((1+$kern_blocks)) count=$root_blocks 2>/dev/null | \
-			mtd $append write - rootfs
+	[ -n "$boot_layout" ] || return
+
+	case "${layout}" in
+		boot|1) echo 1 > $boot_layout;;
+		linux|0) echo 0 > $boot_layout;;
+		*) echo "Unknown layout \"${layout}\"";;
+	esac
+}
+
+#do_flash_mtd ${sec} "0:HLOS"
+#[root@OpenWrt:/proc# cat mtd 
+#dev:    size   erasesize  name
+#mtd0: 00100000 00020000 "0:SBL1"
+#mtd1: 00100000 00020000 "0:MIBIB"
+#mtd2: 00100000 00020000 "0:BOOTCONFIG"
+#]
+# /proc/mtd 文件记录各分区大小。
+do_flash_mtd() {
+	local bin=$1
+	local mtdname=$2
+	local append=""
+
+	local mtdpart=$(grep "\"${mtdname}\"" /proc/mtd | awk -F: '{print $1}')
+	local pgsz=$(cat /sys/class/mtd/${mtdpart}/writesize)
+	[ -f "$CONF_TAR" -a "$SAVE_CONFIG" -eq 1 -a "$2" == "rootfs" ] && append="-j $CONF_TAR"
+
+	#yzg: dd output the content to stdout, mtd write the content from stdin ("write -") to mtd part. (-e /dev/${mtdpart}, erase device before writting.)
+	dd if=/tmp/${bin}.bin bs=${pgsz} conv=sync | mtd $append write - -e "/dev/${mtdpart}" "/dev/${mtdpart}"
+}
+
+do_flash_emmc() {
+	local bin=$1
+	local emmcblock=$2
+
+	dd if=/dev/zero of=${emmcblock}
+	dd if=/tmp/${bin}.bin of=${emmcblock}
+}
+
+do_flash_partition() {
+	local bin=$1
+	local mtdname=$2
+	local emmcblock="$(find_mmc_part "$mtdname")"
+
+	if [ -e "$emmcblock" ]; then
+		do_flash_emmc $bin $emmcblock
 	else
-		echo "invalid image"
+		do_flash_mtd $bin $mtdname
 	fi
 }
 
-platform_check_image() {
-	local board=$(ixp4xx_board_name)
-	local magic="$(get_magic_word "$1")"
-	local partitions=$(platform_find_partitions)
-	local kernelpart=$(platform_find_kernelpart "${partitions#*:}")
-	local kern_part_size=0x$(platform_find_part_size "$kernelpart")
-	local kern_length=0x$(dd if="$1" bs=2 skip=1 count=4 2>/dev/null)
+do_flash_bootconfig() {
+	local bin=$1
+	local mtdname=$2
 
-	[ "$#" -gt 1 ] && return 1
+	# Fail safe upgrade
+	if [ -f /proc/boot_info/getbinary_${bin} ]; then
+		cat /proc/boot_info/getbinary_${bin} > /tmp/${bin}.bin
+		do_flash_partition $bin $mtdname
+	fi
+}
 
-	case "$board" in
-	avila | cambria )
-		[ "$magic" != "4349" ] && {
-			echo "Invalid image. Use *-sysupgrade.bin files on this board"
-			return 1
-		}
+#yzg: do_flash_failsafe_partition ${sec} "0:HLOS"
+#[root@OpenWrt:/proc/boot_info# ls
+#0:APPSBL               0:QSEE                 rootfs
+#0:CDT                  getbinary_bootconfig
+#0:HLOS                 getbinary_bootconfig1
+#]
+do_flash_failsafe_partition() {
+	local bin=$1
+	local mtdname=$2
+	local emmcblock
+	local primaryboot
 
-		kern_length_b=$(printf '%d' $kern_length)
-		kern_part_size_b=$(printf '%d' $kern_part_size)
-		if [ $kern_length_b -gt $kern_part_size_b ]; then
-			echo "Invalid image. Kernel size ($kern_length) exceeds kernel partition ($kern_part_size)"
-			return 1
-		fi
-
-		local md5_img=$(dd if="$1" bs=2 skip=9 count=16 2>/dev/null)
-		local md5_chk=$(dd if="$1" bs=$CI_BLKSZ skip=1 2>/dev/null | md5sum -); md5_chk="${md5_chk%% *}"
-		if [ -n "$md5_img" -a -n "$md5_chk" ] && [ "$md5_img" = "$md5_chk" ]; then
-			return 0
+	# Fail safe upgrade
+	[ -f /proc/boot_info/$mtdname/upgradepartition ] && {
+		default_mtd=$mtdname
+		mtdname=$(cat /proc/boot_info/$mtdname/upgradepartition)
+		primaryboot=$(cat /proc/boot_info/$default_mtd/primaryboot)
+		if [ $primaryboot -eq 0 ]; then
+			echo 1 > /proc/boot_info/$default_mtd/primaryboot
 		else
-			echo "Invalid image. Contents do not match checksum (image:$md5_img calculated:$md5_chk)"
-			return 1
+			echo 0 > /proc/boot_info/$default_mtd/primaryboot
+		fi
+	}
+
+	emmcblock="$(find_mmc_part "$mtdname")"
+
+	if [ -e "$emmcblock" ]; then
+		do_flash_emmc $bin $emmcblock
+	else
+		do_flash_mtd $bin $mtdname
+	fi
+
+}
+
+do_force_primaryboot_change()
+{
+	local mtdname="0:APPSBL"	
+	mtdpart=$(grep "\"${mtdname}\"" /proc/mtd | awk -F: '{print $1}')
+	[ -f /proc/boot_info/$mtdname/upgradepartition ] && {
+		echo $1 > /proc/boot_info/$mtdname/primaryboot
+	}
+	
+	mtdname="0:QSEE"	
+	mtdpart=$(grep "\"${mtdname}\"" /proc/mtd | awk -F: '{print $1}')
+	[ -f /proc/boot_info/$mtdname/upgradepartition ] && {
+		echo $1 > /proc/boot_info/$mtdname/primaryboot
+	}
+	
+	mtdname="0:CDT"	
+	mtdpart=$(grep "\"${mtdname}\"" /proc/mtd | awk -F: '{print $1}')
+	[ -f /proc/boot_info/$mtdname/upgradepartition ] && {
+		echo $1 > /proc/boot_info/$mtdname/primaryboot
+	}
+	
+	mtdname="0:HLOS"	
+	mtdpart=$(grep "\"${mtdname}\"" /proc/mtd | awk -F: '{print $1}')
+	[ -f /proc/boot_info/$mtdname/upgradepartition ] && {
+		echo $1 > /proc/boot_info/$mtdname/primaryboot
+	}		
+	
+	echo '-----Only flash kernel+fs, keep primaryboot in all section consistent ---------'
+}
+
+#yzg: do_flash_failsafe_partition ${sec} "rootfs"
+do_flash_ubi() {
+	local bin=$1
+	local mtdname=$2
+	local mtdpart
+	local primaryboot
+
+	mtdpart=$(grep "\"${mtdname}\"" /proc/mtd | awk -F: '{print $1}')
+	#yzg: -f : force, -p x: <path to device> 
+	ubidetach -f -p /dev/${mtdpart}
+
+	# Fail safe upgrade
+	[ -f /proc/boot_info/$mtdname/upgradepartition ] && {
+		primaryboot=$(cat /proc/boot_info/$mtdname/primaryboot)
+		if [ $primaryboot -eq 0 ]; then
+			echo 1 > /proc/boot_info/$mtdname/primaryboot
+			
+			if [ $has_optional_section -eq 0 ]; then
+				do_force_primaryboot_change 1
+			fi
+		else
+			echo 0 > /proc/boot_info/$mtdname/primaryboot
+			
+			if [ $has_optional_section -eq 0 ]; then
+				do_force_primaryboot_change 0
+			fi
 		fi
 
-		return 0
-		;;
-	esac
+		mtdname=$(cat /proc/boot_info/$mtdname/upgradepartition)
+	}
 
-	echo "Sysupgrade is not yet supported on $board."
-	return 1
+	mtdpart=$(grep "\"${mtdname}\"" /proc/mtd | awk -F: '{print $1}')
+
+	#yzg: -y : yes for all questions. -f flash_image_file.
+	ubiformat /dev/${mtdpart} -y -f /tmp/${bin}.bin
 }
 
-platform_do_upgrade() {
-	local board=$(ixp4xx_board_name)
+do_flash_tz() {
+	local sec=$1
+	local mtdpart=$(grep "\"0:QSEE\"" /proc/mtd | awk -F: '{print $1}')
+	local emmcblock="$(find_mmc_part "0:QSEE")"
 
-	v "board=$board"
-	case "$board" in
-	avila | cambria )
-		platform_do_upgrade_combined "$ARGV"
-		;;
-	*)
-		default_do_upgrade "$ARGV"
-		;;
-	esac
+	if [ -n "$mtdpart" -o -e "$emmcblock" ]; then
+		do_flash_failsafe_partition ${sec} "0:QSEE"
+	else
+		do_flash_failsafe_partition ${sec} "0:TZ"
+	fi
 }
 
-disable_watchdog() {
-	v "killing watchdog"
-	killall watchdog
-	( ps | grep -v 'grep' | grep '/dev/watchdog' ) && {
-		echo 'Could not disable watchdog'
+do_flash_ddr() {
+	local sec=$1
+	local mtdpart=$(grep "\"0:CDT\"" /proc/mtd | awk -F: '{print $1}')
+	local emmcblock="$(find_mmc_part "0:CDT")"
+
+	if [ -n "$mtdpart" -o -e "$emmcblock" ]; then
+		do_flash_failsafe_partition ${sec} "0:CDT"
+	else
+		do_flash_failsafe_partition ${sec} "0:DDRPARAMS"
+	fi
+}
+
+to_upper ()
+{
+	echo $1 | awk '{print toupper($0)}'
+}
+
+#yzg 真正的刷写分区。
+flash_section() {
+	local sec=$1
+
+	local board=$(ipq806x_board_name)
+	case "${sec}" in
+		hlos*) switch_layout linux; do_flash_failsafe_partition ${sec} "0:HLOS";;
+		rootfs*) switch_layout linux; do_flash_failsafe_partition ${sec} "rootfs";;
+		fs*) switch_layout linux; do_flash_failsafe_partition ${sec} "rootfs";;
+		ubi*) switch_layout linux; do_flash_ubi ${sec} "rootfs";;
+		sbl1*) switch_layout boot; do_flash_partition ${sec} "0:SBL1";;
+		sbl2*) switch_layout boot; do_flash_failsafe_partition ${sec} "0:SBL2";;
+		sbl3*) switch_layout boot; do_flash_failsafe_partition ${sec} "0:SBL3";;
+		mibib*) switch_layout boot; do_flash_partition ${sec} "0:MIBIB";;
+		dtb-$(to_upper $board)*) switch_layout boot; do_flash_partition ${sec} "0:DTB";;
+		u-boot*) switch_layout boot; do_flash_failsafe_partition ${sec} "0:APPSBL";;
+		ddr-$(to_upper $board)*) switch_layout boot; do_flash_ddr ${sec};;
+		ddr-${board}-*) switch_layout boot; do_flash_failsafe_partition ${sec} "0:DDRCONFIG";;
+		ssd*) switch_layout boot; do_flash_partition ${sec} "0:SSD";;
+		tz*) switch_layout boot; do_flash_tz ${sec};;
+		rpm*) switch_layout boot; do_flash_failsafe_partition ${sec} "0:RPM";;
+		*) echo "Section ${sec} ignored"; return 1;;
+	esac
+
+	echo "Flashed ${sec}"
+}
+
+erase_emmc_config() {
+	local emmcblock="$(find_mmc_part "rootfs_data")"
+	if [ -e "$emmcblock" -a "$SAVE_CONFIG" -ne 1 ]; then
+		dd if=/dev/zero of=${emmcblock}
+	fi
+}
+
+
+
+platform_check_image() {
+	local board=$(ipq806x_board_name)
+
+	local mandatory_nand="ubi"
+	local mandatory_nor_emmc="hlos fs"
+	local mandatory_nor="hlos"
+	local mandatory_section_found=0
+	local optional="sb11 sbl2 u-boot ddr-${board} ssd tz rpm"
+	local ignored="mibib bootconfig"
+
+	image_is_FIT $1 || return 1
+
+	image_has_mandatory_section $1 ${mandatory_nand} && {\
+		mandatory_section_found=1
+	}
+
+	image_has_mandatory_section $1 ${mandatory_nor_emmc} && {\
+		mandatory_section_found=1
+	}
+
+	image_has_mandatory_section $1 ${mandatory_nor} && {\
+		mandatory_section_found=1
+	}
+
+	if [ $mandatory_section_found -eq 0 ]; then
+		echo "Error: mandatory section(s) missing from \"$1\". Abort..."
+		return 1
+	fi
+
+	for sec in ${optional}; do
+		image_contains $1 ${sec} || {\
+			echo "Warning: optional section \"${sec}\" missing from \"$1\". Continue..."
+			has_optional_section=1
+		}
+	done
+
+	for sec in ${ignored}; do
+		image_contains $1 ${sec} && {\
+			echo "Warning: section \"${sec}\" will be ignored from \"$1\". Continue..."
+		}
+	done
+
+	image_demux $1 || {\
+		echo "Error: \"$1\" couldn't be extracted. Abort..."
 		return 1
 	}
+
+	[ -f /tmp/hlos_version ] && rm -f /tmp/*_version
+	dumpimage -c $1
+	return $?
 }
 
-# CONFIG_WATCHDOG_NOWAYOUT=y - can't kill watchdog unless kernel cmdline has a mpcore_wdt.nowayout=0
-#append sysupgrade_pre_upgrade disable_watchdog
+platform_version_upgrade() {
+	local version_files="appsbl_version sbl_version tz_version hlos_version rpm_version"
+	local sys="/sys/devices/system/qfprom/qfprom0/"
+	local tmp="/tmp/"
+
+	for file in $version_files; do
+		[ -f "${tmp}${file}" ] && {
+			echo "Updating "${sys}${file}" with `cat "${tmp}${file}"`"
+			echo `cat "${tmp}${file}"` > "${sys}${file}"
+			rm -f "${tmp}${file}"
+		}
+	done
+}
+
+#yzg: do_upgrade -> common.sh : platform_do_upgrade "$ARGV"
+platform_do_upgrade() {
+	local board=$(ipq806x_board_name)
+
+	# verify some things exist before erasing
+	if [ ! -e $1 ]; then
+		echo "Error: Can't find $1 after switching to ramfs, aborting upgrade!"
+		reboot
+	fi
+
+	for sec in $(print_sections $1); do
+		if [ ! -e /tmp/${sec}.bin ]; then
+			echo "Error: Cant' find ${sec} after switching to ramfs, aborting upgrade!"
+			reboot
+		fi
+	done
+
+	case "$board" in
+	db149 | ap148 | ap145 | ap148_1xx | db149_1xx | db149_2xx | ap145_1xx | ap160 | ap160_2xx | ap161 | ak01_1xx | ap-dk01.1-c1 | ap-dk01.1-c2 | ap-dk04.1-c1 | ap-dk04.1-c2 | ap-dk04.1-c3 | ap-dk04.1-c4 | ap-dk04.1-c5 | ap-dk05.1-c1 |  ap-dk06.1-c1 | ap-dk07.1-c1 | ap-dk07.1-c2)
+		for sec in $(print_sections $1); do
+			flash_section ${sec}
+		done
+
+		switch_layout linux
+		# update bootconfig to register that fw upgrade has been done
+		do_flash_bootconfig bootconfig "0:BOOTCONFIG"
+		do_flash_bootconfig bootconfig1 "0:BOOTCONFIG1"
+		platform_version_upgrade
+
+		erase_emmc_config
+		return 0;
+		;;
+	esac
+
+	echo "Upgrade failed!"
+	return 1;
+}
+
+platform_copy_config() {
+	local nand_part="$(find_mtd_part "ubi_rootfs")"
+	local emmcblock="$(find_mmc_part "rootfs_data")"
+
+	if [ -e "$nand_part" ]; then
+		local mtdname=rootfs
+		local mtdpart
+
+		[ -f /proc/boot_info/$mtdname/upgradepartition ] && {
+			mtdname=$(cat /proc/boot_info/$mtdname/upgradepartition)
+		}
+
+		mtdpart=$(grep "\"${mtdname}\"" /proc/mtd | awk -F: '{print $1}')
+		ubiattach -p /dev/${mtdpart}
+		mount -t ubifs ubi0:rootfs_data /tmp/overlay
+		cp /tmp/sysupgrade.tgz /tmp/overlay/
+		sync
+		umount /tmp/overlay
+	elif [ -e "$emmcblock" ]; then
+		mount -t ext4 "$emmcblock" /tmp/overlay
+		cp /tmp/sysupgrade.tgz /tmp/overlay/
+		sync
+		umount /tmp/overlay
+	fi
+}
+

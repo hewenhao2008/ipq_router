@@ -8,9 +8,10 @@ USE_REFRESH=1
 . /lib/upgrade/common.sh
 
 RAMFS_COPY_DATA=/lib/ipq806x.sh
-RAMFS_COPY_BIN="/usr/bin/dumpimage /bin/mktemp /usr/sbin/mkfs.ubifs
+RAMFS_COPY_BIN="/usr/bin/dumpimage /bin/mktemp /usr/sbin/mkfs.ubifs /usr/bin/truncate 
 	/usr/sbin/ubiattach /usr/sbin/ubidetach /usr/sbin/ubiformat /usr/sbin/ubimkvol
 	/usr/sbin/ubiupdatevol /usr/bin/basename /bin/rm /usr/bin/find"
+
 
 get_full_section_name() {
 	local img=$1
@@ -26,6 +27,7 @@ image_contains() {
 	dumpimage -l ${img} | grep -q "^ Image.*(${sec}.*)" || return 1
 }
 
+#yzg: 通过dumpimage 打印FIT文件的sections。
 print_sections() {
 	local img=$1
 
@@ -83,17 +85,91 @@ switch_layout() {
 	esac
 }
 
+#do_flash_mtd ${sec} "0:HLOS"
+#[root@OpenWrt:/proc# cat mtd 
+#dev:    size   erasesize  name
+#mtd0: 00100000 00020000 "0:SBL1"
+#mtd1: 00100000 00020000 "0:MIBIB"
+#mtd2: 00100000 00020000 "0:BOOTCONFIG"
+#]
+# /proc/mtd 文件记录各分区大小。
 do_flash_mtd() {
 	local bin=$1
 	local mtdname=$2
 	local append=""
+	local img_md5
+	local img_size
+	local part_md5
 
 	local mtdpart=$(grep "\"${mtdname}\"" /proc/mtd | awk -F: '{print $1}')
 	local pgsz=$(cat /sys/class/mtd/${mtdpart}/writesize)
 	[ -f "$CONF_TAR" -a "$SAVE_CONFIG" -eq 1 -a "$2" == "rootfs" ] && append="-j $CONF_TAR"
 
+	#yzg: dd output the content to stdout, mtd write the content from stdin ("write -") to mtd part. (-e /dev/${mtdpart}, erase device before writting.)
 	dd if=/tmp/${bin}.bin bs=${pgsz} conv=sync | mtd $append write - -e "/dev/${mtdpart}" "/dev/${mtdpart}"
+		
+	#### verify flashing success ##################
+	img_md5=$(md5sum /tmp/${bin}.bin | awk '{print $1}')
+	img_size=$(ls -l /tmp/${bin}.bin | awk '{print $5}')
+	
+	dd if=/dev/${mtdpart} of=/tmp/partitionN.img bs=2048
+	truncate -s ${img_size} /tmp/partitionN.img
+	
+	part_md5=$(md5sum /tmp/partitionN.img | awk '{print $1}')
+	
+	if [ ${img_md5} == ${part_md5} ]; then
+		echo "--md5 verification passed...${img_md5}"	
+	else
+		echo "--md5 verification fail....image_md5: [${img_md5}]  part_md5:[${part_md5}]"	
+		sleep 1000
+		#reboot
+	fi
+	
+	rm -f /tmp/partitionN.img
+	###############################################
 }
+
+# /proc/mtd 文件记录各分区大小。
+# do_flash_mtd_by_mtdpart image.bin mtdx 
+do_flash_mtd_by_mtdpart() {
+	local bin=$1
+	local mtdpart=$2
+	local append=""
+	local img_md5
+	local img_size
+	local part_md5
+	local pgsz
+	
+	echo "------ do_flash_mtd_by_mtdpart: $1 to ${mtdpart} -----------"
+	
+	pgsz=$(cat /sys/class/mtd/${mtdpart}/writesize)
+	[ -f "$CONF_TAR" -a "$SAVE_CONFIG" -eq 1 -a "$2" == "rootfs" ] && append="-j $CONF_TAR"
+		
+
+	#yzg: dd output the content to stdout, mtd write the content from stdin ("write -") to mtd part. (-e /dev/${mtdpart}, erase device before writting.)
+	dd if=/tmp/${bin}.bin bs=${pgsz} conv=sync | mtd $append write - -e "/dev/${mtdpart}" "/dev/${mtdpart}"
+		
+	#### verify flashing success ##################
+	img_md5=$(md5sum /tmp/${bin}.bin | awk '{print $1}')
+	img_size=$(ls -l /tmp/${bin}.bin | awk '{print $5}')
+	
+	dd if=/dev/${mtdpart} of=/tmp/partitionN.img bs=2048
+	truncate -s ${img_size} /tmp/partitionN.img
+	
+	part_md5=$(md5sum /tmp/partitionN.img | awk '{print $1}')
+	
+	if [ ${img_md5} == ${part_md5} ]; then
+		echo "--md5 verification passed...${img_md5}"	
+	else
+		echo "--md5 verification fail....image_md5: [${img_md5}]  part_md5:[${part_md5}]"	
+		sleep 1000
+		#reboot
+	fi
+	
+	rm -f /tmp/partitionN.img
+	###############################################
+}
+
 
 do_flash_emmc() {
 	local bin=$1
@@ -126,23 +202,57 @@ do_flash_bootconfig() {
 	fi
 }
 
+#yzg: do_flash_failsafe_partition ${sec} "0:HLOS"
+#[root@OpenWrt:/proc/boot_info# ls
+#0:APPSBL               0:QSEE                 rootfs
+#0:CDT                  getbinary_bootconfig
+#0:HLOS                 getbinary_bootconfig1
+#]
 do_flash_failsafe_partition() {
 	local bin=$1
 	local mtdname=$2
 	local emmcblock
 	local primaryboot
+	local mtdpart
 
+	########### changes: 统一修改primaryboot flag，不单独更新 ###############
 	# Fail safe upgrade
-	[ -f /proc/boot_info/$mtdname/upgradepartition ] && {
-		default_mtd=$mtdname
-		mtdname=$(cat /proc/boot_info/$mtdname/upgradepartition)
-		primaryboot=$(cat /proc/boot_info/$default_mtd/primaryboot)
-		if [ $primaryboot -eq 0 ]; then
-			echo 1 > /proc/boot_info/$default_mtd/primaryboot
-		else
-			echo 0 > /proc/boot_info/$default_mtd/primaryboot
-		fi
-	}
+	#[ -f /proc/boot_info/$mtdname/upgradepartition ] && {
+	#	default_mtd=$mtdname
+	#	mtdname=$(cat /proc/boot_info/$mtdname/upgradepartition)
+	#	primaryboot=$(cat /proc/boot_info/$default_mtd/primaryboot)
+	#	if [ $primaryboot -eq 0 ]; then
+	#		echo 1 > /proc/boot_info/$default_mtd/primaryboot
+	#	else
+	#		echo 0 > /proc/boot_info/$default_mtd/primaryboot
+	#	fi
+	#}
+	
+	echo "---- debug: mtdname is ${mtdname} ----"
+	
+	if [ ${mtdname} == "0:APPSBL" ]; then
+			## upgrading uboot now. switch  0:APPSBL and 0:APPSBL_1
+			# check whether we are boot by primary parititon, rootfs on mtd12. then uboot upgarde to mtd10--APPSBL_1
+			mtdpart=$(grep "\"rootfs"\" /proc/mtd | awk -F: '{print $1}')
+			
+			echo "---- debug: mtdpart is ${mtdpart} ----"
+			
+			if [ $mtdpart = "mtd12" ]; then
+				mtdpart="mtd10"
+			else				
+				mtdpart="mtd9"			   
+		  fi
+		 
+		 do_flash_mtd_by_mtdpart $bin ${mtdpart}
+		 
+		 return 0
+	else
+		[ -f /proc/boot_info/$mtdname/upgradepartition ] && {
+		  default_mtd=$mtdname
+		  mtdname=$(cat /proc/boot_info/$mtdname/upgradepartition)
+	  }
+ fi
+	#############changes end ####################################################
 
 	emmcblock="$(find_mmc_part "$mtdname")"
 
@@ -154,30 +264,102 @@ do_flash_failsafe_partition() {
 
 }
 
+## 统一更新primaryboot标记。
+do_force_primaryboot_change()
+{
+	local mtdnames="rootfs 0:HLOS 0:APPSBL 0:CDT 0:QSEE"
+	
+	echo '----- upgrade 'primaryboot'=$1 flag begin ---------'
+	
+	for mtdname in ${mtdnames}; do 
+		#mtdpart=$(grep "\"${mtdname}\"" /proc/mtd | awk -F: '{print $1}')
+		
+		#debug
+		ls -l /proc/boot_info/$mtdname/upgradepartition
+		
+		[ -f /proc/boot_info/$mtdname/upgradepartition ] && {
+			echo $1 > /proc/boot_info/$mtdname/primaryboot
+		}	
+	done
+	
+	echo '----- upgrade 'primaryboot' flag done ---------'
+}
+
+#yzg: do_flash_failsafe_partition ${sec} "rootfs"
 do_flash_ubi() {
 	local bin=$1
 	local mtdname=$2
 	local mtdpart
 	local primaryboot
+	local img_md5
+	local img_size
+	local part_md5
 
 	mtdpart=$(grep "\"${mtdname}\"" /proc/mtd | awk -F: '{print $1}')
+	#yzg: -f : force, -p x: <path to device> 
 	ubidetach -f -p /dev/${mtdpart}
 
+	echo "-------mtdname:${mtdname}  mtdpart:${mtdpart}-------"
+	
+	########## change: 最后修改primaryboot标记 ####################
 	# Fail safe upgrade
 	[ -f /proc/boot_info/$mtdname/upgradepartition ] && {
-		primaryboot=$(cat /proc/boot_info/$mtdname/primaryboot)
-		if [ $primaryboot -eq 0 ]; then
-			echo 1 > /proc/boot_info/$mtdname/primaryboot
-		else
-			echo 0 > /proc/boot_info/$mtdname/primaryboot
-		fi
-
+		#primaryboot=$(cat /proc/boot_info/$mtdname/primaryboot)
+		#if [ $primaryboot -eq 0 ]; then
+		#	echo 1 > /proc/boot_info/$mtdname/primaryboot
+		#else
+		#	echo 0 > /proc/boot_info/$mtdname/primaryboot
+		#fi
+		
+		#Now mtdname is rootfs_1, going to upgrade this part...
 		mtdname=$(cat /proc/boot_info/$mtdname/upgradepartition)
 	}
 
 	mtdpart=$(grep "\"${mtdname}\"" /proc/mtd | awk -F: '{print $1}')
 
+	#yzg: -y : yes for all questions. -f flash_image_file.
 	ubiformat /dev/${mtdpart} -y -f /tmp/${bin}.bin
+	
+	############# changes: add image verifing...############
+	img_md5=$(md5sum /tmp/${bin}.bin | awk '{print $1}')
+	img_size=$(ls -l /tmp/${bin}.bin | awk '{print $5}')
+	
+	echo "------ image size: ${img_size}"
+	
+	dd if=/dev/${mtdpart} of=/tmp/partitionN.img bs=2048
+	truncate -s ${img_size} /tmp/partitionN.img
+		
+	part_md5=$(md5sum /tmp/${bin}.bin | awk '{print $1}')
+	
+	if [ ${img_md5} == ${part_md5} ]; then
+		echo "--md5 verification passed...${img_md5}"	
+	else
+		echo "--md5 verification fail....image_md5: [${img_md5}]  part_md5:[${part_md5}]"	
+		sleep 1000
+		#reboot
+	fi
+	rm -f /tmp/partitionN.img
+	#########################################
+	
+	##### changes:  最后修改primaryboot标记 ####################
+	echo "now mtdname is: ${mtdname}"
+	
+	#[ -f /proc/boot_info/$mtdname/upgradepartition ] && {
+		
+		primaryboot=$(cat /proc/boot_info/rootfs/primaryboot)
+		if [ $primaryboot -eq 0 ]; then
+			do_force_primaryboot_change 1
+			echo "change primaryboot to 1."
+		else
+			do_force_primaryboot_change 0
+			echo "change primaryboot to 0."
+		fi		
+	#}
+	
+	#if [ !-f /proc/boot_info/rootfs/upgradepartition ]; then
+	#	echo "error, /proc/boot_info/$mtdname/upgradepartition not exists."
+	#fi
+	
 }
 
 do_flash_tz() {
@@ -209,6 +391,7 @@ to_upper ()
 	echo $1 | awk '{print toupper($0)}'
 }
 
+#yzg 真正的刷写分区。
 flash_section() {
 	local sec=$1
 
@@ -218,17 +401,17 @@ flash_section() {
 		rootfs*) switch_layout linux; do_flash_failsafe_partition ${sec} "rootfs";;
 		fs*) switch_layout linux; do_flash_failsafe_partition ${sec} "rootfs";;
 		ubi*) switch_layout linux; do_flash_ubi ${sec} "rootfs";;
-		sbl1*) switch_layout boot; do_flash_partition ${sec} "0:SBL1";;
-		sbl2*) switch_layout boot; do_flash_failsafe_partition ${sec} "0:SBL2";;
-		sbl3*) switch_layout boot; do_flash_failsafe_partition ${sec} "0:SBL3";;
-		mibib*) switch_layout boot; do_flash_partition ${sec} "0:MIBIB";;
-		dtb-$(to_upper $board)*) switch_layout boot; do_flash_partition ${sec} "0:DTB";;
+		#sbl1*) switch_layout boot; do_flash_partition ${sec} "0:SBL1";;
+		#sbl2*) switch_layout boot; do_flash_failsafe_partition ${sec} "0:SBL2";;
+		#sbl3*) switch_layout boot; do_flash_failsafe_partition ${sec} "0:SBL3";;
+		#mibib*) switch_layout boot; do_flash_partition ${sec} "0:MIBIB";;
+		#dtb-$(to_upper $board)*) switch_layout boot; do_flash_partition ${sec} "0:DTB";;
 		u-boot*) switch_layout boot; do_flash_failsafe_partition ${sec} "0:APPSBL";;
-		ddr-$(to_upper $board)*) switch_layout boot; do_flash_ddr ${sec};;
-		ddr-${board}-*) switch_layout boot; do_flash_failsafe_partition ${sec} "0:DDRCONFIG";;
-		ssd*) switch_layout boot; do_flash_partition ${sec} "0:SSD";;
-		tz*) switch_layout boot; do_flash_tz ${sec};;
-		rpm*) switch_layout boot; do_flash_failsafe_partition ${sec} "0:RPM";;
+		#ddr-$(to_upper $board)*) switch_layout boot; do_flash_ddr ${sec};;
+		#ddr-${board}-*) switch_layout boot; do_flash_failsafe_partition ${sec} "0:DDRCONFIG";;
+		#ssd*) switch_layout boot; do_flash_partition ${sec} "0:SSD";;
+		#tz*) switch_layout boot; do_flash_tz ${sec};;
+		#rpm*) switch_layout boot; do_flash_failsafe_partition ${sec} "0:RPM";;
 		*) echo "Section ${sec} ignored"; return 1;;
 	esac
 
@@ -307,6 +490,7 @@ platform_version_upgrade() {
 	done
 }
 
+#yzg: do_upgrade -> common.sh : platform_do_upgrade "$ARGV"
 platform_do_upgrade() {
 	local board=$(ipq806x_board_name)
 
@@ -326,6 +510,7 @@ platform_do_upgrade() {
 	case "$board" in
 	db149 | ap148 | ap145 | ap148_1xx | db149_1xx | db149_2xx | ap145_1xx | ap160 | ap160_2xx | ap161 | ak01_1xx | ap-dk01.1-c1 | ap-dk01.1-c2 | ap-dk04.1-c1 | ap-dk04.1-c2 | ap-dk04.1-c3 | ap-dk04.1-c4 | ap-dk04.1-c5 | ap-dk05.1-c1 |  ap-dk06.1-c1 | ap-dk07.1-c1 | ap-dk07.1-c2)
 		for sec in $(print_sections $1); do
+			echo "---- flash_section ${sec} now...."
 			flash_section ${sec}
 		done
 
@@ -362,11 +547,13 @@ platform_copy_config() {
 		cp /tmp/sysupgrade.tgz /tmp/overlay/
 		sync
 		umount /tmp/overlay
+		echo "-----platform_copy_config complete. [$nand_part] (mtdname is ${mtdname}) (mtdpart is ${mtdpart})  -------"
 	elif [ -e "$emmcblock" ]; then
 		mount -t ext4 "$emmcblock" /tmp/overlay
 		cp /tmp/sysupgrade.tgz /tmp/overlay/
 		sync
 		umount /tmp/overlay
+		echo "-----platform_copy_config complete [$emmcblock] -------"
 	fi
 }
 
