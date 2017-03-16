@@ -9,7 +9,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/zigbee-mgmt
 #  SECTION:=net
 	CATEGORY:=IoT
-	DEPENDS:=+libpthread 
+	DEPENDS:=+libpthread +libjson-c
 	TITLE:=zigbee-mgmt PC host programs.
 endef
 
@@ -30,9 +30,13 @@ endef
 define Package/zigbee-mgmt/install	
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/zigbee-mgmt $(1)/usr/bin/	
+	
+	#for unit test only.
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/zigbee-mgmt-ut $(1)/usr/bin/	
 endef
 
-TARGET_LDFLAGS += -lpthread
+TARGET_CFLAGS += -g
+TARGET_LDFLAGS += -lpthread  -ljson-c
 
 $(eval $(call BuildPackage,zigbee-mgmt))
 

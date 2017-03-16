@@ -22,6 +22,8 @@
 typedef unsigned char  zb_uint8;
 typedef unsigned short zb_uint16;
 typedef unsigned int   zb_uint32;
+typedef unsigned long long   zb_uint64;
+
 
 //serial data length.
 #define SBUF_LEN	256

@@ -8,18 +8,17 @@ int payload_len = 3;
 
 void test(void)
 {
-	struct ser_addr app;
-	struct ser_addr zb_end;
+	ser_addr_t app;
+	ser_addr_t zb_end;
 	struct serial_session_node *pSession;
 	int ret;
 
-	app.addr[0] = 0x00;
-	app.addr[1] = 0x00;
-	app.addr[2] = 0x11;
-
-	zb_end.addr[0] = 0x00;
-	zb_end.addr[1] = 0x11;
-	zb_end.addr[2] = 0x22;
+	app.short_addr = 0x00;
+	app.endp_addr = 0xaa;
+	
+	zb_end.short_addr = 0x11;
+	zb_end.endp_addr = 0xbb;
+	
 
 	printf("--- add serial session.\n");
 	pSession = find_or_add_serial_session(&app, &zb_end);
@@ -29,6 +28,7 @@ void test(void)
 		return;
 	}
 
+	printf(">>>> calling zb_protocol_send.\n");
 	ret = zb_protocol_send(pSession, cmd, payload, payload_len);
 	if( ret  == 0)
 	{
