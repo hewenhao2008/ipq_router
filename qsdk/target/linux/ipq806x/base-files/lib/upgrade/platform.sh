@@ -121,7 +121,6 @@ do_flash_mtd() {
 		echo "--md5 verification passed...${img_md5}"	
 	else
 		echo "--md5 verification fail....image_md5: [${img_md5}]  part_md5:[${part_md5}]"	
-		sleep 1000
 		#reboot
 	fi
 	
@@ -162,7 +161,6 @@ do_flash_mtd_by_mtdpart() {
 		echo "--md5 verification passed...${img_md5}"	
 	else
 		echo "--md5 verification fail....image_md5: [${img_md5}]  part_md5:[${part_md5}]"	
-		sleep 1000
 		#reboot
 	fi
 	
@@ -335,7 +333,6 @@ do_flash_ubi() {
 		echo "--md5 verification passed...${img_md5}"	
 	else
 		echo "--md5 verification fail....image_md5: [${img_md5}]  part_md5:[${part_md5}]"	
-		sleep 1000
 		#reboot
 	fi
 	rm -f /tmp/partitionN.img
