@@ -13,6 +13,7 @@ typedef enum
 {
   IOT_MSG_SQUEUE_EVENT_LOOP = 0x00,
   IOT_MSG_SQUEUE_DATABASE   = 0x01,
+  IOT_MSG_SQUEUE_DEBUG      = 0x02,
 
 }IOT_MSG_SQUEUE_NO;
 
@@ -24,6 +25,7 @@ typedef enum
 	IOT_MODULE_DATABASE   = 0x03,
 	IOT_MODULE_WIFI       = 0x04,
   IOT_MODULE_ZIGBEE     = 0x05,
+  IOT_MODULE_DEBUG      = 0x06,
 }IOT_MODULE_ID;
 
 #define IOT_MSG_BODY_LEN_MAX  8000
@@ -37,9 +39,6 @@ typedef struct
   unsigned char body[IOT_MSG_BODY_LEN_MAX];
 }IOT_MSG;
 
-
-#define IOT_MSG_REAL_LEN(msg) ((size_t)((((IOT_MSG*)0)->body)+(msg)->body_len-sizeof(long)))
-#define IOT_MSG_MAX_LEN (sizeof(IOT_MSG)-sizeof(long))
 
 /*
   get or create a msg queue

@@ -1,5 +1,5 @@
 IOT_UTIL_LIB = libiot_util.so
-IOT_UTIL_LIB_OBJ = iot_msg_util.o 
+IOT_UTIL_LIB_OBJ = iot_msg_util.o iot_debug_util.o
 
 
 %.o: %.c

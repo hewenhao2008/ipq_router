@@ -109,7 +109,7 @@ static unsigned char query_dst_module_database(char *method, char *uuid)
 	unsigned char dst = IOT_MODULE_NONE;
 	fprintf(stderr, "query dst module from database(method=%s; uuid=%s)\n", method, uuid);
 
-	dst = (uuid[0]%2)==0?IOT_MODULE_ZIGBEE:IOT_MODULE_WIFI;
+	dst = IOT_MODULE_ZIGBEE; // send to zigbee directly here
 
 	return dst;
 }
