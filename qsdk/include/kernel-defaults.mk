@@ -30,6 +30,8 @@ endif
 
 export HOST_EXTRACFLAGS=-I$(STAGING_DIR_HOST)/include
 
+T_KERNEL_CONFIG := $(T_PRODUCT_CONFIG_DIR)/$(PR_NAME)/kernel.config
+
 # defined in quilt.mk
 Kernel/Patch:=$(Kernel/Patch/Default)
 
@@ -100,7 +102,31 @@ define Kernel/SetNoInitramfs
 	echo 'CONFIG_INITRAMFS_SOURCE=""' >> $(LINUX_DIR)/.config
 endef
 
+define Kernel/Configure/T_ReplacePrjConf
+		if [ \! -e $(T_KERNEL_CONFIG) ]; then \
+			echo "ERROR:file $(T_KERNEL_CONFIG) was NOT found "; \
+		fi; \
+	cp $(T_KERNEL_CONFIG) $(PLATFORM_DIR)/config-$(KERNEL_PATCHVER);
+endef
+
+ifneq ($(PR_NAME)x,x)
+    define Kernel/Configure/T_Prepare
+		$(call Kernel/Configure/T_ReplacePrjConf)
+    endef
+else
+    define Kernel/Configure/T_Prepare
+		@if [ $(1) == config ]; then \
+			echo ""; \
+			echo "=====================WARNING!====================="; \
+			echo "PR_NAME is NOT defined, use default target config!"; \
+			echo "=====================WARNING!====================="; \
+			echo ""; \
+		fi
+    endef
+endif
+
 define Kernel/Configure/Default
+	$(call Kernel/Configure/T_Prepare)
 	$(LINUX_CONF_CMD) > $(LINUX_DIR)/.config.target
 # copy CONFIG_KERNEL_* settings over to .config.target
 	awk '/^(#[[:space:]]+)?CONFIG_KERNEL/{sub("CONFIG_KERNEL_","CONFIG_");print}' $(TOPDIR)/.config >> $(LINUX_DIR)/.config.target
