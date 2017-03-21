@@ -72,14 +72,9 @@ FindDeviceTrees ?= $(notdir $(basename $(shell find $(LINUX_DIR)/arch/arm/boot/d
 define Image/BuildKernel/template
 	$(CP) $(KDIR)/vmlinux$(subst openwrt-ipq806x,,$(IMG_PREFIX)).debug $(BIN_DIR)/$(IMG_PREFIX)-vmlinux.elf
 
-	$(foreach device, $(call FindDeviceTrees, qcom-ipq8064-), \
-		$(call Image/BuildKernel/$(1),$(device),$(IPQ806X_KERNEL_LOADADDR));)
-
-	$(foreach device, $(call FindDeviceTrees, qcom-ipq40??-), \
+	$(foreach device, $(call FindDeviceTrees, $(CONFIG_TARGET_DTS_PREFIX)), \
 		$(call Image/BuildKernel/$(1),$(device),$(IPQ40XX_KERNEL_LOADADDR));)
 
-	$(foreach device, $(call FindDeviceTrees, qcom-ipq807x-), \
-		$(call Image/BuildKernel/$(1),$(device),$(IPQ807X_KERNEL_LOADADDR));)
 endef
 
 define Image/BuildKernel
