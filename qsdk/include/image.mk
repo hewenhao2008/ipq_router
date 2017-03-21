@@ -10,6 +10,7 @@ include $(INCLUDE_DIR)/prereq.mk
 include $(INCLUDE_DIR)/kernel.mk
 include $(INCLUDE_DIR)/host.mk
 include $(INCLUDE_DIR)/version.mk
+include $(INCLUDE_DIR)/image-hdiot.mk
 
 override MAKE:=$(_SINGLE)$(SUBMAKE)
 override NO_TRACE_MAKE:=$(_SINGLE)$(NO_TRACE_MAKE)
@@ -485,6 +486,7 @@ define BuildImage
 
   mkfs_prepare: image_prepare
 	$(call Image/mkfs/prepare)
+	$(call Image/hdiot/prepare)
 
   kernel_prepare: mkfs_prepare
 	$(call Image/BuildKernel)

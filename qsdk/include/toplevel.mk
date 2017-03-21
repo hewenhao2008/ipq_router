@@ -62,6 +62,7 @@ export SCAN_COOKIE
 SUBMAKE:=umask 022; $(SUBMAKE)
 
 ULIMIT_FIX=_limit=`ulimit -n`; [ "$$_limit" = "unlimited" -o "$$_limit" -ge 1024 ] || ulimit -n 1024;
+T_BUILDROOT_CONFIG := $(T_PRODUCT_CONFIG_DIR)/$(PR_NAME)/buildroot.config
 
 prepare-mk: FORCE ;
 
@@ -81,8 +82,15 @@ prepare-tmpinfo: FORCE
 
 .config: ./scripts/config/conf $(if $(CONFIG_HAVE_DOT_CONFIG),,prepare-tmpinfo)
 	@+if [ \! -e .config ] || ! grep CONFIG_HAVE_DOT_CONFIG .config >/dev/null; then \
+		if [ $(PR_NAME)x != ""x ]; then \
+			if [ \! -e $(T_BUILDROOT_CONFIG) ]; then \
+				@echo "file $(T_BUILDROOT_CONFIG) was NOT found ";	\
+			fi; \
+			cp $(T_BUILDROOT_CONFIG) .config;	\
+		else \
 		[ -e $(HOME)/.openwrt/defconfig ] && cp $(HOME)/.openwrt/defconfig .config; \
 		$(_SINGLE)$(NO_TRACE_MAKE) menuconfig $(PREP_MK); \
+		fi; \
 	fi
 
 scripts/config/mconf:

@@ -9,7 +9,8 @@
 TOPDIR:=${CURDIR}
 LC_ALL:=C
 LANG:=C
-export TOPDIR LC_ALL LANG
+T_PRODUCT_CONFIG_DIR:=$(TOPDIR)/product_config
+export TOPDIR LC_ALL LANG T_PRODUCT_CONFIG_DIR
 
 empty:=
 space:= $(empty) $(empty)
