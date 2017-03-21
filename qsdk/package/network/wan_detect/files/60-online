@@ -1,0 +1,51 @@
+#!/bin/sh
+
+TIMEOUT=2.5
+
+ERROR_INPUT_PARA_ERROR=-1
+LINK_STATUS_INVALID=0
+LINK_STATUS_VALID=1
+
+. /lib/netifd/common_api.sh
+. /lib/netifd/smart_lan_ip.sh
+
+BINPATH=/usr/sbin/link_status_detect_core
+STATEDIR=/tmp/linkstate
+STATEPATH=/tmp/linkstate/online
+
+[ "$INTERFACE" == "wan" ] || [ "$INTERFACE" == "internet" ] || return "$LINK_STATUS_INVALID"
+[ -d "$STATEDIR" ] || mkdir "$STATEDIR"
+
+if [ "$ACTION" == "ifdown" ]; then
+	echo "$LINK_STATUS_INVALID" > "$STATEPATH"
+	return "$LINK_STATUS_INVALID"
+fi
+
+#obtain IP,dns and start dns detection process
+local wanIP=   
+local gPriDns=
+local gSndDns=
+local priDns=
+local sndDns=                 
+             
+get_wan_ip_addr wanIP			
+if [ "$wanIP" == "0.0.0.0" ]; then
+	echo "$LINK_STATUS_INVALID" > "$STATEPATH"
+	return "$LINK_STATUS_INVALID"
+fi
+ 
+get_wan_dns gPriDns gSndDns
+if [ -z "$gPriDns" ]; then
+	echo "$LINK_STATUS_INVALID" > "$STATEPATH"
+	return "$LINK_STATUS_INVALID"
+else
+	priDns=$(ipToNum $gPriDns)
+fi
+
+[ -n "$gSndDns" ] && sndDns=$(ipToNum $gSndDns) 
+
+$BINPATH $TIMEOUT $priDns $sndDns
+RETVAR=$?
+
+echo "$RETVAR" > "$STATEPATH"
+return "$RETVAR"
