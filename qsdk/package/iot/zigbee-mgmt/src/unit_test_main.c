@@ -3,9 +3,9 @@
 #include <pthread.h>
 
 #include "common_def.h"
-#include "serial.h"
+#include "serial_dev.h"
 #include "zb_serial_protocol.h"
-#include "zb_serial_rx_thread.h"
+#include "rdt_rx_thread.h"
 
 #include "biz_msg_parser.h"
 
@@ -53,10 +53,6 @@ void test1(void)
 		
 }
 
-void test3(void)
-{
-	biz_search_dev(0, 0, 0xF1);
-}
 
 
 int test1_main()
@@ -70,6 +66,13 @@ int test1_main()
 		return -1;
 	}
 
+	
+	ret = init_rdt_tx();
+		if( ret != 0)
+		{
+			return -1;
+		}
+
 	ret = init_zb_serial_protocol_mgmt();
 	if( ret != 0)
 	{
@@ -82,7 +85,7 @@ int test1_main()
 		return -1;
 	}
 	
-	ret = start_serial_input_thread();
+	ret = start_rdt_recv_thread();
 	if( ret != 0)
 	{
 		return -1;
@@ -101,7 +104,7 @@ int test1_main()
 
 
 	//pthread_join(serial_input_thread, NULL);
-	join_serial_rx_thread();
+	join_rdt_recv_thread();
 
 	ZB_PRINT(">> ERROR: main thread exit..<<\n");
 	return 0;	
@@ -119,6 +122,12 @@ int test3_main()
 		return -1;
 	}
 
+	ret = init_rdt_tx();
+	if( ret != 0)
+	{
+		return -1;
+	}
+
 	ret = init_zb_serial_protocol_mgmt();
 	if( ret != 0)
 	{
@@ -131,6 +140,13 @@ int test3_main()
 		return -1;
 	}
 
+	ret = init_zigbee_db();
+	if( ret != 0)
+	{
+		ZB_ERROR("Failed to init. init_zigbee_db.\n");
+		return -1;
+	}
+
 	//biz layer, init node mgmt.
 	ret = biz_node_mgmt_init();
 	if( ret != 0)
@@ -138,16 +154,30 @@ int test3_main()
 		ZB_ERROR("Failed to init. biz_node_mgmt_init.\n");
 		return -1;
 	}
-	
-	ret = start_serial_input_thread();
+
+	//init biz msg queue.
+	ret = init_biz_msg_queue();
+	if( ret != 0)
+	{
+		ZB_ERROR("Failed to init. init_biz_msg_queue.\n");
+		return -1;
+	}
+		
+	//start dev search thread.
+	ret = start_dev_search_thread();
 	if( ret != 0)
 	{
 		return -1;
 	}
 
-	
-	//start dev search thread.
-	ret = start_dev_search_thread();
+	//Start to recv data now..
+	ret = start_rdt_recv_thread();
+	if( ret != 0)
+	{
+		return -1;
+	}
+
+	ret = init_cli_msg_handle();
 	if( ret != 0)
 	{
 		return -1;
@@ -158,7 +188,7 @@ int test3_main()
 	test3();
 
 	//pthread_join(serial_input_thread, NULL);
-	join_serial_rx_thread();
+	join_rdt_recv_thread();
 
 	ZB_PRINT(">> ERROR: main thread exit..<<\n");
 	return 0;	
@@ -185,6 +215,50 @@ char * js_wr_attr2 = "{\
     \"data\": \"{\\\"status\\\":\\\"toggle\\\",\\\"rgb\\\":\\\"123\\\"}\"\
     }";
 
+/*
+char * add_dev_attr2 = "{\
+    \"cmd\": \"write\",\
+    \"model\": \"qualcomm.plug.v1\",\
+    \"device_uuid\": \"158d0000e7ccfd\",\
+    \"token\": \"5\",\
+    \"short_id\": 42653,\
+    \"data\": \"{\\\"status\\\":\\\"toggle\\\",\\\"rgb\\\":\\\"123\\\"}\"\
+    }";
+*/
+/*  
+char * add_dev_attr2 = "{\
+  \"client\": \"android\", \
+  \"timestamp\": 1487236771,\
+  \"version\": 1.1,\
+  \"client_version\": \"android5.0\",\
+  \"user_agent\": \"huawei\",\
+  \"method\": \"control\",\
+  \"token\": \"adfljasdklfjawefmdfamsdfklajdf\",\
+  \"params\": {\
+    \"cmd\": \"adddev\",   \
+    \"token\": \"5555\",    \
+    \"data\": \"{\\\"manufacture\\\":\\\"LDS\\\", \\\"module\\\":\\\"ZHA-ColorLight\\\"}\"\
+    }\
+ }";    
+*/
+
+
+char *add_dev_attr2 =   "{\
+    \"client\": \"android\",\
+    \"timestamp\": 1487236771,\
+    \"version\": 1.1,\
+    \"client_version\":\"android5.0\",\
+    \"user_agent\": \"huawei\",\
+    \"method\": \"control\",\
+    \"token\": \"adfljas\",\
+     \"params\": {\
+     \"cmd\": \"adddev\", \
+     \"token\": \"5555\",    \
+     \"data\": \"{\\\"manufacture\\\":\\\"LDS\\\", \\\"module\\\":\\\"ZHA-ColorLight\\\"}\"\
+     }\
+ } ";
+      
+
 void test2(void)
 {
 	int ret;
@@ -192,7 +266,7 @@ void test2(void)
 
 	memset(&bizMsg, 0, sizeof(bizMsg));
 	
-	ret = parse_app_msg(js_wr_attr2, &bizMsg);
+	ret = parse_app_msg(add_dev_attr2, &bizMsg);
 	if( ret < 0)
 	{
 		printf(" !!! Failed to parse !!!\n");
@@ -203,6 +277,23 @@ void test2(void)
 	
 	printf(">>>>>>> success.<<<<<<<<<\n\n");
 	return;
+}
+
+void test3(void)
+{
+	//biz_search_dev(0x1234, "FIB");
+	int ret;
+	biz_msg_t bizMsg;
+
+	memset(&bizMsg, 0, sizeof(bizMsg));
+	
+	ret = parse_app_msg(add_dev_attr2, &bizMsg);
+	if( ret < 0)
+	{
+		printf(" !!! Failed to parse !!!\n");
+		return ;
+	}
+	
 }
 
 
@@ -254,6 +345,9 @@ int main(int argc, char *argv[])
 			break;
 		case 3:
 			test3_main();
+			break;
+		case 4:
+			builder_test();
 			break;
 		default:
 			break;

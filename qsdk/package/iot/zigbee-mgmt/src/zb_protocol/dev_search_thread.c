@@ -2,7 +2,10 @@
 #include "biz_msg_parser.h"
 #include "kernel_list.h"
 #include "dev_search_thread.h"
-#include "biz_msg_process.h"
+
+//#include "biz_msg_process.h"
+#include "zb_serial_protocol.h"
+
 #include <sys/time.h>
 #include <time.h>
 
@@ -39,6 +42,7 @@ int init_dev_search_thread(void)
 // 200ms
 #define DEV_SEARCH_THREAD_TIMEOUT_NS 1000*1000*200
 
+#if 0
 void *dev_search_thread_func(void *arg)
 {
 	struct thread_dev_search *pThreadDevS = (struct thread_dev_search *)arg;
@@ -155,14 +159,14 @@ void *dev_search_thread_func(void *arg)
 	
 	return NULL;	
 }
+#endif
 
-#if 0
-void *dev_search_thread_func(void *arg)
+void *dev_search_thread_func_new(void *arg)
 {
 	struct thread_dev_search *pThreadDevS = (struct thread_dev_search *)arg;
 	int rc;
 	struct timespec absTime;
-	biz_node_t *pos, *n;
+	struct serial_session_node *pos, *n;
 	int processed;
 	
 	int exit_list_loop = 0;
@@ -189,81 +193,116 @@ void *dev_search_thread_func(void *arg)
 
 			pthread_mutex_unlock( &gThreadDevSearch.stat_mutex );
 		}
-		
-		exit_list_loop = 0;
-		
-		//process each node in the list.
-		list_for_each_entry_safe(pos, n, &gThreadDevSearch.dev_nodes, search_list)
+
+		// 1. remove node from list.		
+		pthread_mutex_lock(&gThreadDevSearch.list_lock);
+
+		if( !list_empty(&gThreadDevSearch.dev_nodes))
 		{
-			// 1. timeout handle
+			pos = list_entry( gThreadDevSearch.dev_nodes.next, struct serial_session_node, search_list);
 
-			// 2. normal status process.
-			switch(pos->zb_biz_status)
-			{				
-				case ZB_BIZ_GOT_DEVICE_ANNOUNCE:
-				{
-					//send attribute.
-					zb_dev_get_id(pos);
-					pos->zb_biz_status = ZB_BIZ_READING_ID;
-					break;
-				}
-				case ZB_BIZ_GOT_ID:
-				{
-					//trigger bind request.
-					//For light, bind STATUS.
-					//get dev's mac id by shortid.
-					//coord_bind_req( zb_dev_get_mac_by_short_id(pos->dev_shortid),
-					//	pos->dev_shortid, pos->dev_endp_id);
-					
-					zb_dev_bind_request(pos, 
-						zb_dev_get_mac_by_short_id(pos->dev_shortid),
-						pos->dev_shortid, pos->dev_endp_id);
-						
-					pos->zb_biz_status = ZB_BIZ_BIND_SENT;
-				}
-				case ZB_BIZ_BIND_RESP:
-				{
-					pos->zb_biz_status = ZB_BIZ_SEARCH_COMPLETE;
-					//break. we think it is complete.
-					list_del( &pos->search_list );
-					exit_list_loop= 1;
-					break;
-				}	
-				case ZB_BIZ_SEARCH_COMPLETE_DEL_IT:
-				{
-					list_del( &pos->search_list );
-					exit_list_loop = 1;
-					break;
-				}
-			}
+			list_del( &pos->search_list );
+		}
+		else
+		{
+			pos = NULL;
+		}
+		pthread_mutex_unlock(&gThreadDevSearch.list_lock);
 
-			if(exit_list_loop)
+		if( pos == NULL)
+		{
+			continue;
+		}		
+
+		// 2. process base on the status of this node.		
+		switch(pos->zb_join_status)
+		{				
+			case ZB_BIZ_GOT_DEVICE_ANNOUNCE:
 			{
-				break; //exit list_for_each loop. since we del entry in the loop, it is not safe to scan it now.	
+				//send attribute.
+				host_send_get_ids(pos);
+				pos->zb_join_status = ZB_BIZ_READING_ID;
+				break;
 			}
-		}//end of list_for_each
+			case ZB_BIZ_GOT_ID:
+			{
+				//trigger bind request.
+				//For light, bind STATUS.
+				//get dev's mac id by shortid.
+				//coord_bind_req( zb_dev_get_mac_by_short_id(pos->dev_shortid),
+				//	pos->dev_shortid, pos->dev_endp_id);
+				#if 0
+				host_send_bind_request(pos, 
+					pos->mac,
+					pos->dst_addr.endp_addr, 
+					0x6);	//cluster id.
+				#endif
 
+				//test, bind colorX,colorY
+				host_send_bind_request(pos, 
+					pos->mac,
+					pos->dst_addr.endp_addr, 
+					0x0300);	//cluster id.
+					
+				pos->zb_join_status = ZB_BIZ_BIND_SENT;
+				
+				ZB_DBG("!!!! pos:0x%p  status:ZB_BIZ_BIND_SENT.\n", pos);
+				break;
+			}
+			case ZB_BIZ_BIND_RESP:
+			{
+				//zb_send_config_report.
+				host_send_rpt_configure( pos );
+				
+				pos->zb_join_status = ZB_BIZ_CONFIG_REPORTING_SENT;				
+				break;
+			}	
+			case ZB_BIZ_CONFIG_REPORTING_RESP:
+			{
+				ZB_DBG("\n\n>> set configure reporting complete. <<\n");	
+				pos->zb_join_status = ZB_BIZ_SEARCH_COMPLETE;
 
-		
+				
+				//TODO: If all endpoint of a device is complete,
+				//move this device to working list. Do it in coord_msg_handle(),
+				
+				break;
+			}
+			case ZB_BIZ_SEARCH_COMPLETE_DEL_IT:
+			{				
+				ZB_DBG("\n\n>> KICK it. <<\n");	
+
+				host_send_dev_leave_request(pos, pos->mac, 0);
+				
+				#if 0
+				{
+					//debug only
+					int t=0;
+					for(t=0; t<10; t++)
+					{
+						zb_onoff_light_new(pos, 0x02);	//toggle
+						sleep(2);
+					}
+				}
+				#endif
+				
+				break;
+			}
+		}
 	}
 
 	ZB_DBG("dev_search_thread_func exitd.\n ");
 	
 	return NULL;	
 }
-#endif
 
-void add_node_to_search_list(biz_node_t * pnode)
+void add_node_to_search_list_new(struct serial_session_node * pnode)
 {
 	//ZB_DBG("---Add node to search list begin--\n");
 	
 	pthread_mutex_lock( &gThreadDevSearch.list_lock);
 	list_add( &pnode->search_list, &gThreadDevSearch.dev_nodes);	
 	pthread_mutex_unlock( &gThreadDevSearch.list_lock );
-
-	//ZB_DBG("---Add node to search list end--\n");
-
-	//ZB_DBG("---wakeup search thread begin--\n");
 
 	//wake up thread if required.
 	pthread_mutex_lock( &gThreadDevSearch.stat_mutex);	
@@ -274,10 +313,11 @@ void add_node_to_search_list(biz_node_t * pnode)
 }
 
 
+
 int start_dev_search_thread(void)
 {
 	int ret;
-	ret  = pthread_create( &gThreadDevSearch.thread_id, NULL, dev_search_thread_func, &gThreadDevSearch);
+	ret  = pthread_create( &gThreadDevSearch.thread_id, NULL, dev_search_thread_func_new, &gThreadDevSearch);
 
 	if( 0 != ret)
 	{

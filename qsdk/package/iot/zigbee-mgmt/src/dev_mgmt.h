@@ -45,6 +45,7 @@ struct common_dev_attr
 	zb_uint8 	*attr_data;
 };
 
+int zb_dev_get_endp_cnt(zb_uint16 shortid);
 
 
 #endif

@@ -11,18 +11,23 @@ int zb_dev_add(zb_uint16 shortid, zb_uint8 *mac, zb_uint8 capability)
 	{
 		ZB_PRINT("%.2X-", mac[i]&0xFF);
 	}
+}
 
-	
+int zb_dev_get_endpoints(char *manufactureName, char *ModuleId, zb_uint8 endp_addrs[])
+{
+	return db_get_endpoints(manufactureName, ModuleId, endp_addrs);	
 }
 
 int zb_dev_get_endp_cnt(zb_uint16 shortid)
 {
-	return 1;
+	return 1;	
 }
 
-zb_uint8 zb_dev_get_endp(zb_uint16 shortid, int endp_index)
+zb_uint8 zb_dev_get_endp_addr(zb_uint16 shortid, int endp_index)
 {
-	return 0x0B;
+	//return 0x0B;
+
+	return 0x01;	
 }
 
 

@@ -4,10 +4,7 @@
 #include "common_def.h"
 #include "kernel_list.h"
 
-
-
 #pragma pack(1)
-
 typedef struct zb_frame_addr
 {
 	zb_uint16	short_addr;	//short addr
@@ -43,18 +40,9 @@ struct zb_ser_frame_hdr
 	zb_frame_addr_t	dst_addr;
 	zb_frame_addr_t src_addr;
 	zb_frame_cmd_t 	cmd;
-	
-	//zb_uint8	dst_addr[ZB_ADDR_LEN];
-	//zb_uint8	src_addr[ZB_ADDR_LEN];
-	//zb_uint8	cmd[ZB_CMD_LEN];
 };
 
 typedef zb_frame_addr_t ser_addr_t;
-
-//struct ser_addr
-//{
-//	zb_uint8 addr[ZB_ADDR_LEN];
-//};
 
 #pragma pack()
 
@@ -65,31 +53,38 @@ typedef zb_frame_addr_t ser_addr_t;
 
 #define SER_TX_BUF_LEN	(256+10)
 
+/*
 #define BIZ_RECORD_NUM 8
 struct biz_record
 {
 	zb_uint8 	tx_cmd_seq[BIZ_RECORD_NUM];
 	zb_uint64 	tx_cmd[BIZ_RECORD_NUM];
 	zb_uint8  	tx_cmd_type;
-
-	zb_uint8 wr_index;
+	zb_uint8 	wr_index;
 };
+*/
 
 struct serial_session_node
 {
 	struct list_head list;
 
+	//struct list_head chain_for_adding;	//biz node used to search endp.
+	void * pBizNodeDoingAdding;
+
+	struct list_head search_list;
+	int zb_join_status;
+
 	zb_frame_addr_t	src_addr;
 	zb_frame_addr_t dst_addr;
+
+	//ZDO store this info. when dst_addr.endp == 0
+	zb_uint8 mac[8];
 	
 	zb_uint8 seq;
 
 	zb_uint8 *tx_buf;
 	zb_uint8  tx_payload_len;
-	zb_uint8  biz_cmd_status;
-
-	struct biz_record  tx_records;
-
+	
 	zb_uint8 rx_seq;	
 };
 
@@ -99,23 +94,37 @@ struct serial_session_mgmt
 	struct list_head list[SER_SESSION_HASH_NUM];
 };
 
-
-//#define SER_HASH(psrcAddr, pdstAddr)	((psrcAddr->short_addr^pdstAddr->short_addr^psrcAddr->endp_addr^pdstAddr->endp_addr)&0x7F)
-
-//#define addr_match(paddr1, paddr2)	((paddr1[0]==paddr2[0])&&(paddr1[1]==paddr2[1])&&(paddr1[2]==paddr2[2]))
 #define addr_match(paddr1, paddr2)		( !memcmp(paddr1, paddr2, ZB_ADDR_LEN) )
 
 
 int serial_data_in(zb_uint8 *data, zb_uint8 len);
 
-void serial_frame_handle(struct zb_ser_frame_hdr *pFrame);
+void zframe_handle(struct zb_ser_frame_hdr *pFrame);
 
 struct serial_session_node * find_or_add_serial_session(ser_addr_t *src, ser_addr_t *dst);
 
+struct serial_session_node * find_serial_session(ser_addr_t *src, ser_addr_t *dst);
 
-typedef int (*biz_msg_handle_cb)(struct zb_ser_frame_hdr *pFrame, struct serial_session_node *pnode);
+
+struct serial_session_node * find_endp_from_join_list(ser_addr_t *addr, zb_uint8 seq);
+
+struct serial_session_node * find_endp_from_join_list_byseq(zb_uint16 short_addr, zb_uint8 seq);
+
+struct serial_session_node * find_dev_from_join_list(ser_addr_t *addr);
+
+struct serial_session_node * add_dev_to_join_list(ser_addr_t *src, ser_addr_t *dst);
+
+struct serial_session_node * add_endp_to_join_list(ser_addr_t *src, ser_addr_t *dst);
+
+
+typedef int (*biz_msg_handle_cb)(struct zb_ser_frame_hdr *pFrame);
 
 void register_biz_msg_handle(biz_msg_handle_cb func);
+
+#define SEQ_DEV_JOIN_PHASE_MAX 64
+
+zb_uint8 get_new_seq_no(int join_phase);
+
 
 #endif
 

@@ -29,5 +29,22 @@ typedef unsigned long long   zb_uint64;
 #define SBUF_LEN	256
 
 
+enum SERIAL_THREAD_STATUS
+{
+	S_THREAD_NOT_START,
+	S_THREAD_RUNNING,
+	S_THREAD_STOP
+};
+
+
+typedef struct serial_tx_buf
+{
+	zb_uint8 *dat;
+	zb_uint8  dat_len;	
+	zb_uint8  need_ack;	//we send out ack frame which not need ack again.
+	
+}serial_tx_buf_t;
+
+
 #endif
 
