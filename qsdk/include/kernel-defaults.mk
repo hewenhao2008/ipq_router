@@ -62,7 +62,7 @@ else
 	if [ -d $(LINUX_DIR) ]; then \
 		rmdir $(LINUX_DIR); \
 	fi
-	ln -s $(CONFIG_EXTERNAL_KERNEL_TREE) $(LINUX_DIR)
+	$(CP) $(CONFIG_EXTERNAL_KERNEL_TREE) $(LINUX_DIR)
   endef
 endif
 
