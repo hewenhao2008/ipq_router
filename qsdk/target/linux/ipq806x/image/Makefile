@@ -72,7 +72,7 @@ FindDeviceTrees ?= $(notdir $(basename $(shell find $(LINUX_DIR)/arch/arm/boot/d
 define Image/BuildKernel/template
 	$(CP) $(KDIR)/vmlinux$(subst openwrt-ipq806x,,$(IMG_PREFIX)).debug $(BIN_DIR)/$(IMG_PREFIX)-vmlinux.elf
 
-	$(foreach device, $(call FindDeviceTrees, $(CONFIG_TARGET_DTS_PREFIX)), \
+	$(foreach device, $(call FindDeviceTrees, qcom-$(CONFIG_TARGET_DTS_PREFIX)-), \
 		$(call Image/BuildKernel/$(1),$(device),$(IPQ40XX_KERNEL_LOADADDR));)
 
 endef
@@ -80,10 +80,14 @@ endef
 define Image/BuildKernel
 	$(call Image/BuildKernel/template,FIT)
 
+ifeq ($(CONFIG_TARGET_DTS_PREFIX), "ipq40xx")
 	$(call Image/BuildKernel/GenericFIT,qcom-ipq40xx,$(IPQ40XX_KERNEL_LOADADDR))
 	$(call Image/BuildKernel/MultiDTBFIT,qcom-ipq40xx-ap.dkxx, \
 		$(call FindDeviceTrees, qcom-ipq40??-ap) $(call FindDeviceTrees, qcom-ipq40??-db), \
 		$(IPQ40XX_KERNEL_LOADADDR))
+endif
+
+ifeq ($(CONFIG_TARGET_DTS_PREFIX), "ipq806x")
 	$(if $(wildcard $(LINUX_DIR)/arch/arm/boot/dts/qcom-ipq8064-ap148_1xx.dtb), \
 		$(call Image/BuildKernel/MultiDTBFIT,qcom-ipq8064-ap148_1xx, \
 		$(call FindDeviceTrees, qcom-ipq8064-*ap148_1xx), \
@@ -120,6 +124,7 @@ define Image/BuildKernel
 	$(call Image/BuildKernel/MultiDTBFIT,qcom-ipq8064-ap161, \
 		$(call FindDeviceTrees, qcom-ipq8064-*ap161), \
 		$(IPQ806X_KERNEL_LOADADDR)))
+endif
 endef
 
 define Image/BuildKernel/Initramfs
