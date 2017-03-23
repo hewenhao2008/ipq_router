@@ -17,10 +17,11 @@ IPQ40XX_KERNEL_LOADADDR = 0x80208000
 endif
 IPQ807X_KERNEL_LOADADDR = 0x41208000
 
+HD_SCRIPT_DIR = $(TOPDIR)/hd_script
+
 ifneq ($(CONFIG_TARGET_ROOTFS_UBIFS),)
 define Image/mkfs/ubifs_fit
 	$(call Image/ubifs_128MB,$(1))
-	$(call Image/ubifs_512MB,$(1))
 	$(call Image/UbiImage,$(1))
 endef
 endif
@@ -175,7 +176,7 @@ define Image/Build/squashfs
 endef
 
 define Image/Build/Project/HD_Router
-	echo build HD_Router project $(1)
+	-$(HD_SCRIPT_DIR)/gen_single_image.sh $(TOPDIR) $(PR_NAME)_$(1)_$(shell date +%y%m%d).bin
 endef
 
 define Image/Build
