@@ -80,14 +80,14 @@ endef
 define Image/BuildKernel
 	$(call Image/BuildKernel/template,FIT)
 
-ifeq ($(CONFIG_TARGET_DTS_PREFIX), "ipq40xx")
+ifeq ($(CONFIG_TARGET_DTS_PREFIX), ipq40xx)
 	$(call Image/BuildKernel/GenericFIT,qcom-ipq40xx,$(IPQ40XX_KERNEL_LOADADDR))
 	$(call Image/BuildKernel/MultiDTBFIT,qcom-ipq40xx-ap.dkxx, \
 		$(call FindDeviceTrees, qcom-ipq40??-ap) $(call FindDeviceTrees, qcom-ipq40??-db), \
 		$(IPQ40XX_KERNEL_LOADADDR))
 endif
 
-ifeq ($(CONFIG_TARGET_DTS_PREFIX), "ipq806x")
+ifeq ($(CONFIG_TARGET_DTS_PREFIX), ipq806x)
 	$(if $(wildcard $(LINUX_DIR)/arch/arm/boot/dts/qcom-ipq8064-ap148_1xx.dtb), \
 		$(call Image/BuildKernel/MultiDTBFIT,qcom-ipq8064-ap148_1xx, \
 		$(call FindDeviceTrees, qcom-ipq8064-*ap148_1xx), \
