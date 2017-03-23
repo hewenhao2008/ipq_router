@@ -1,0 +1,437 @@
+08:10:37 
+msp.py is running from CWD: /local/mnt/workspace/CRMBuilds/BOOT.AK.1.0-00234-C-1_20160825_080620/b/boot_images/build/ms/bin/AAAAANAA/AP145_EMMC
+
+08:10:37 
+Search Paths
+08:10:37 []
+08:10:37 
+Files
+08:10:37 []
+08:10:37 
+
+	Looking for '/local/mnt/workspace/CRMBuilds/BOOT.AK.1.0-00234-C-1_20160825_080620/b/boot_images/build/ms/bin/AAAAANAA/AP145_EMMC/rawprogram1.xml'
+08:10:37 	----------------------------------------
+08:10:37 	Searching '/local/mnt/workspace/CRMBuilds/BOOT.AK.1.0-00234-C-1_20160825_080620/b/boot_images/build/ms/bin/AAAAANAA/AP145_EMMC'
+08:10:37 
+	**Found /local/mnt/workspace/CRMBuilds/BOOT.AK.1.0-00234-C-1_20160825_080620/b/boot_images/build/ms/bin/AAAAANAA/AP145_EMMC/rawprogram1.xml (1407 bytes)
+08:10:37 
+
+	Looking for '/local/mnt/workspace/CRMBuilds/BOOT.AK.1.0-00234-C-1_20160825_080620/b/boot_images/build/ms/bin/AAAAANAA/AP145_EMMC/patch1.xml'
+08:10:37 	----------------------------------------
+08:10:37 	Searching '/local/mnt/workspace/CRMBuilds/BOOT.AK.1.0-00234-C-1_20160825_080620/b/boot_images/build/ms/bin/AAAAANAA/AP145_EMMC'
+08:10:37 
+	**Found /local/mnt/workspace/CRMBuilds/BOOT.AK.1.0-00234-C-1_20160825_080620/b/boot_images/build/ms/bin/AAAAANAA/AP145_EMMC/patch1.xml (5231 bytes)
+08:10:37 MinDiskSizeInSectors=8226 sectors (4.02MB)
+08:10:37 MinDiskSizeInSectors=270370 sectors (132.02MB)
+08:10:37 MinDiskSizeInSectors=61997056 sectors (30272.00MB)
+08:10:37 
+
+	Looking for 'testsparse.py'
+08:10:37 	----------------------------------------
+08:10:37 	Searching '/local/mnt/workspace/CRMBuilds/BOOT.AK.1.0-00234-C-1_20160825_080620/b/boot_images/build/ms/bin/AAAAANAA/AP145_EMMC'
+08:10:37 	Cound't find file OR perhaps you don't have permission to run os.stat() on this file
+
+08:10:37 
+Programming singleimage.bin of size 29.56 GB
+08:10:37 	             _        _     _             
+08:10:37 	            | |      | |   (_)            
+08:10:37 	 _ __   __ _| |_  ___| |__  _ _ __   __ _ 
+08:10:37 	| '_ \ / _` | __|/ __| '_ \| | '_ \ / _` |
+08:10:37 	| |_) | (_| | |_| (__| | | | | | | | (_| |
+08:10:37 	| .__/ \__,_|\__|\___|_| |_|_|_| |_|\__, |
+08:10:37 	| |                                  __/ |
+08:10:37 	|_|                                 |___/ 
+08:10:37 WARNING 'gpt_main1.bin' for physical_partition_number=1 (only 0 is accessible) - THIS MIGHT FAIL
+08:10:37 
+------------------------------------------------------------------------------
+08:10:37 PATCH: (gpt_main1.bin) Update Primary Header with LastUseableLBA.
+08:10:37 
+
+	Looking for 'gpt_main1.bin'
+08:10:37 	----------------------------------------
+08:10:37 	Searching '/local/mnt/workspace/CRMBuilds/BOOT.AK.1.0-00234-C-1_20160825_080620/b/boot_images/build/ms/bin/AAAAANAA/AP145_EMMC'
+08:10:37 
+	**Found gpt_main1.bin (17408 bytes)
+08:10:37 Opened gpt_main1.bin, cwd=/local/mnt/workspace/CRMBuilds/BOOT.AK.1.0-00234-C-1_20160825_080620/b/boot_images/build/ms/bin/AAAAANAA/AP145_EMMC
+08:10:37 moving to sector 1 (byte location 512)
+08:10:37 success was able to read len(bytes_read)=512
+08:10:37 At sector 1 (0x200) file_sector_offset 48 (0x30) in gpt_main1.bin with 61997022 (0x3B1FFDE)
+08:10:37 Patch value:61997022
+08:10:37 (little endian)
+08:10:37 committing patch of length 512 bytes
+08:10:37 CLOSED 'gpt_main1.bin'
+08:10:37 You're on LINUX! I'm performing a SYNC for you
+08:10:38 PATCH:
+08:10:38 DONE
+
+08:10:38 WARNING 'DISK' for physical_partition_number=1 (only 0 is accessible) - THIS MIGHT FAIL
+08:10:38 WARNING 'gpt_backup1.bin' for physical_partition_number=1 (only 0 is accessible) - THIS MIGHT FAIL
+08:10:38 
+------------------------------------------------------------------------------
+08:10:38 PATCH: (gpt_backup1.bin) Update Backup Header with LastUseableLBA.
+08:10:38 
+
+	Looking for 'gpt_backup1.bin'
+08:10:38 	----------------------------------------
+08:10:38 	Searching '/local/mnt/workspace/CRMBuilds/BOOT.AK.1.0-00234-C-1_20160825_080620/b/boot_images/build/ms/bin/AAAAANAA/AP145_EMMC'
+08:10:38 
+	**Found gpt_backup1.bin (16896 bytes)
+08:10:38 Opened gpt_backup1.bin, cwd=/local/mnt/workspace/CRMBuilds/BOOT.AK.1.0-00234-C-1_20160825_080620/b/boot_images/build/ms/bin/AAAAANAA/AP145_EMMC
+08:10:38 moving to sector 32 (byte location 16384)
+08:10:38 success was able to read len(bytes_read)=512
+08:10:38 At sector 32 (0x4000) file_sector_offset 48 (0x30) in gpt_backup1.bin with 61997022 (0x3B1FFDE)
+08:10:38 Patch value:61997022
+08:10:38 (little endian)
+08:10:38 committing patch of length 512 bytes
+08:10:38 CLOSED 'gpt_backup1.bin'
+08:10:38 You're on LINUX! I'm performing a SYNC for you
+08:10:38 PATCH:
+08:10:38 DONE
+
+08:10:38 WARNING 'DISK' for physical_partition_number=1 (only 0 is accessible) - THIS MIGHT FAIL
+08:10:38 WARNING 'gpt_main1.bin' for physical_partition_number=1 (only 0 is accessible) - THIS MIGHT FAIL
+08:10:38 
+------------------------------------------------------------------------------
+08:10:38 PATCH: (gpt_main1.bin) Update Primary Header with BackupGPT Header Location.
+08:10:38 
+
+	Looking for 'gpt_main1.bin'
+08:10:38 	----------------------------------------
+08:10:38 	Searching '/local/mnt/workspace/CRMBuilds/BOOT.AK.1.0-00234-C-1_20160825_080620/b/boot_images/build/ms/bin/AAAAANAA/AP145_EMMC'
+08:10:38 
+	**Found gpt_main1.bin (17408 bytes)
+08:10:38 Opened gpt_main1.bin, cwd=/local/mnt/workspace/CRMBuilds/BOOT.AK.1.0-00234-C-1_20160825_080620/b/boot_images/build/ms/bin/AAAAANAA/AP145_EMMC
+08:10:38 moving to sector 1 (byte location 512)
+08:10:38 success was able to read len(bytes_read)=512
+08:10:38 At sector 1 (0x200) file_sector_offset 32 (0x20) in gpt_main1.bin with 61997055 (0x3B1FFFF)
+08:10:38 Patch value:61997055
+08:10:38 (little endian)
+08:10:38 committing patch of length 512 bytes
+08:10:38 CLOSED 'gpt_main1.bin'
+08:10:38 You're on LINUX! I'm performing a SYNC for you
+08:10:38 PATCH:
+08:10:38 DONE
+
+08:10:38 WARNING 'DISK' for physical_partition_number=1 (only 0 is accessible) - THIS MIGHT FAIL
+08:10:38 WARNING 'gpt_backup1.bin' for physical_partition_number=1 (only 0 is accessible) - THIS MIGHT FAIL
+08:10:38 
+------------------------------------------------------------------------------
+08:10:38 PATCH: (gpt_backup1.bin) Update Backup Header with CurrentLBA.
+08:10:38 
+
+	Looking for 'gpt_backup1.bin'
+08:10:38 	----------------------------------------
+08:10:38 	Searching '/local/mnt/workspace/CRMBuilds/BOOT.AK.1.0-00234-C-1_20160825_080620/b/boot_images/build/ms/bin/AAAAANAA/AP145_EMMC'
+08:10:38 
+	**Found gpt_backup1.bin (16896 bytes)
+08:10:38 Opened gpt_backup1.bin, cwd=/local/mnt/workspace/CRMBuilds/BOOT.AK.1.0-00234-C-1_20160825_080620/b/boot_images/build/ms/bin/AAAAANAA/AP145_EMMC
+08:10:38 moving to sector 32 (byte location 16384)
+08:10:38 success was able to read len(bytes_read)=512
+08:10:38 At sector 32 (0x4000) file_sector_offset 24 (0x18) in gpt_backup1.bin with 61997055 (0x3B1FFFF)
+08:10:38 Patch value:61997055
+08:10:38 (little endian)
+08:10:38 committing patch of length 512 bytes
+08:10:38 CLOSED 'gpt_backup1.bin'
+08:10:38 You're on LINUX! I'm performing a SYNC for you
+08:10:38 PATCH:
+08:10:38 DONE
+
+08:10:38 WARNING 'DISK' for physical_partition_number=1 (only 0 is accessible) - THIS MIGHT FAIL
+08:10:38 WARNING 'gpt_backup1.bin' for physical_partition_number=1 (only 0 is accessible) - THIS MIGHT FAIL
+08:10:38 
+------------------------------------------------------------------------------
+08:10:38 PATCH: (gpt_backup1.bin) Update Backup Header with Partition Array Location.
+08:10:38 
+
+	Looking for 'gpt_backup1.bin'
+08:10:38 	----------------------------------------
+08:10:38 	Searching '/local/mnt/workspace/CRMBuilds/BOOT.AK.1.0-00234-C-1_20160825_080620/b/boot_images/build/ms/bin/AAAAANAA/AP145_EMMC'
+08:10:38 
+	**Found gpt_backup1.bin (16896 bytes)
+08:10:38 Opened gpt_backup1.bin, cwd=/local/mnt/workspace/CRMBuilds/BOOT.AK.1.0-00234-C-1_20160825_080620/b/boot_images/build/ms/bin/AAAAANAA/AP145_EMMC
+08:10:38 moving to sector 32 (byte location 16384)
+08:10:38 success was able to read len(bytes_read)=512
+08:10:38 At sector 32 (0x4000) file_sector_offset 72 (0x48) in gpt_backup1.bin with 61997023 (0x3B1FFDF)
+08:10:38 Patch value:61997023
+08:10:38 (little endian)
+08:10:38 committing patch of length 512 bytes
+08:10:38 CLOSED 'gpt_backup1.bin'
+08:10:38 You're on LINUX! I'm performing a SYNC for you
+08:10:38 PATCH:
+08:10:38 DONE
+
+08:10:38 WARNING 'DISK' for physical_partition_number=1 (only 0 is accessible) - THIS MIGHT FAIL
+08:10:38 WARNING 'gpt_main1.bin' for physical_partition_number=1 (only 0 is accessible) - THIS MIGHT FAIL
+08:10:38 
+------------------------------------------------------------------------------
+08:10:38 PATCH: (gpt_main1.bin) Update Primary Header with CRC of Partition Array.
+08:10:38 
+
+	Looking for 'gpt_main1.bin'
+08:10:38 	----------------------------------------
+08:10:38 	Searching '/local/mnt/workspace/CRMBuilds/BOOT.AK.1.0-00234-C-1_20160825_080620/b/boot_images/build/ms/bin/AAAAANAA/AP145_EMMC'
+08:10:38 
+	**Found gpt_main1.bin (17408 bytes)
+08:10:38 Opened gpt_main1.bin, cwd=/local/mnt/workspace/CRMBuilds/BOOT.AK.1.0-00234-C-1_20160825_080620/b/boot_images/build/ms/bin/AAAAANAA/AP145_EMMC
+08:10:38 	CRC32(2,512) requested 
+08:10:38 moving to sector 2 (byte location 1024)
+08:10:38 	Move Successful 
+08:10:38 	Trying to read 512 bytes in gpt_main1.bin
+08:10:38 	len(bytes_read)=
+08:10:38 	CRC32=0x205B6922
+08:10:38 moving to sector 1 (byte location 512)
+08:10:38 success was able to read len(bytes_read)=512
+08:10:38 At sector 1 (0x200) file_sector_offset 88 (0x58) in gpt_main1.bin with 542861602 (0x205B6922)
+08:10:38 Patch value:542861602
+08:10:38 (little endian)
+08:10:38 committing patch of length 512 bytes
+08:10:38 CLOSED 'gpt_main1.bin'
+08:10:38 You're on LINUX! I'm performing a SYNC for you
+08:10:38 PATCH:
+08:10:38 DONE
+
+08:10:38 WARNING 'DISK' for physical_partition_number=1 (only 0 is accessible) - THIS MIGHT FAIL
+08:10:38 WARNING 'gpt_backup1.bin' for physical_partition_number=1 (only 0 is accessible) - THIS MIGHT FAIL
+08:10:38 
+------------------------------------------------------------------------------
+08:10:38 PATCH: (gpt_backup1.bin) Update Backup Header with CRC of Partition Array.
+08:10:38 
+
+	Looking for 'gpt_backup1.bin'
+08:10:38 	----------------------------------------
+08:10:38 	Searching '/local/mnt/workspace/CRMBuilds/BOOT.AK.1.0-00234-C-1_20160825_080620/b/boot_images/build/ms/bin/AAAAANAA/AP145_EMMC'
+08:10:38 
+	**Found gpt_backup1.bin (16896 bytes)
+08:10:38 Opened gpt_backup1.bin, cwd=/local/mnt/workspace/CRMBuilds/BOOT.AK.1.0-00234-C-1_20160825_080620/b/boot_images/build/ms/bin/AAAAANAA/AP145_EMMC
+08:10:38 	CRC32(0,512) requested 
+08:10:38 moving to sector 0 (byte location 0)
+08:10:38 	Move Successful 
+08:10:38 	Trying to read 512 bytes in gpt_backup1.bin
+08:10:38 	len(bytes_read)=
+08:10:38 	CRC32=0x205B6922
+08:10:38 moving to sector 32 (byte location 16384)
+08:10:38 success was able to read len(bytes_read)=512
+08:10:38 At sector 32 (0x4000) file_sector_offset 88 (0x58) in gpt_backup1.bin with 542861602 (0x205B6922)
+08:10:38 Patch value:542861602
+08:10:38 (little endian)
+08:10:38 committing patch of length 512 bytes
+08:10:38 CLOSED 'gpt_backup1.bin'
+08:10:38 You're on LINUX! I'm performing a SYNC for you
+08:10:38 PATCH:
+08:10:38 DONE
+
+08:10:38 WARNING 'DISK' for physical_partition_number=1 (only 0 is accessible) - THIS MIGHT FAIL
+08:10:38 WARNING 'gpt_main1.bin' for physical_partition_number=1 (only 0 is accessible) - THIS MIGHT FAIL
+08:10:38 
+------------------------------------------------------------------------------
+08:10:38 PATCH: (gpt_main1.bin) Zero Out Header CRC in Primary Header.
+08:10:38 
+
+	Looking for 'gpt_main1.bin'
+08:10:38 	----------------------------------------
+08:10:38 	Searching '/local/mnt/workspace/CRMBuilds/BOOT.AK.1.0-00234-C-1_20160825_080620/b/boot_images/build/ms/bin/AAAAANAA/AP145_EMMC'
+08:10:38 
+	**Found gpt_main1.bin (17408 bytes)
+08:10:38 Opened gpt_main1.bin, cwd=/local/mnt/workspace/CRMBuilds/BOOT.AK.1.0-00234-C-1_20160825_080620/b/boot_images/build/ms/bin/AAAAANAA/AP145_EMMC
+08:10:38 moving to sector 1 (byte location 512)
+08:10:38 success was able to read len(bytes_read)=512
+08:10:38 At sector 1 (0x200) file_sector_offset 16 (0x10) in gpt_main1.bin with 0 (0x0)
+08:10:38 Patch value:0
+08:10:38 (little endian)
+08:10:38 committing patch of length 512 bytes
+08:10:38 CLOSED 'gpt_main1.bin'
+08:10:38 You're on LINUX! I'm performing a SYNC for you
+08:10:38 PATCH:
+08:10:38 DONE
+
+08:10:38 WARNING 'gpt_main1.bin' for physical_partition_number=1 (only 0 is accessible) - THIS MIGHT FAIL
+08:10:38 
+------------------------------------------------------------------------------
+08:10:38 PATCH: (gpt_main1.bin) Update Primary Header with CRC of Primary Header.
+08:10:38 
+
+	Looking for 'gpt_main1.bin'
+08:10:38 	----------------------------------------
+08:10:38 	Searching '/local/mnt/workspace/CRMBuilds/BOOT.AK.1.0-00234-C-1_20160825_080620/b/boot_images/build/ms/bin/AAAAANAA/AP145_EMMC'
+08:10:38 
+	**Found gpt_main1.bin (17408 bytes)
+08:10:38 Opened gpt_main1.bin, cwd=/local/mnt/workspace/CRMBuilds/BOOT.AK.1.0-00234-C-1_20160825_080620/b/boot_images/build/ms/bin/AAAAANAA/AP145_EMMC
+08:10:38 	CRC32(1,92) requested 
+08:10:38 moving to sector 1 (byte location 512)
+08:10:38 	Move Successful 
+08:10:38 	Trying to read 92 bytes in gpt_main1.bin
+08:10:38 	len(bytes_read)=
+08:10:38 	CRC32=0x51AE8D9B
+08:10:38 moving to sector 1 (byte location 512)
+08:10:38 success was able to read len(bytes_read)=512
+08:10:38 At sector 1 (0x200) file_sector_offset 16 (0x10) in gpt_main1.bin with 1370394011 (0x51AE8D9B)
+08:10:38 Patch value:1370394011
+08:10:38 (little endian)
+08:10:38 committing patch of length 512 bytes
+08:10:38 CLOSED 'gpt_main1.bin'
+08:10:38 You're on LINUX! I'm performing a SYNC for you
+08:10:38 PATCH:
+08:10:38 DONE
+
+08:10:38 WARNING 'DISK' for physical_partition_number=1 (only 0 is accessible) - THIS MIGHT FAIL
+08:10:38 WARNING 'DISK' for physical_partition_number=1 (only 0 is accessible) - THIS MIGHT FAIL
+08:10:38 WARNING 'gpt_backup1.bin' for physical_partition_number=1 (only 0 is accessible) - THIS MIGHT FAIL
+08:10:38 
+------------------------------------------------------------------------------
+08:10:38 PATCH: (gpt_backup1.bin) Zero Out Header CRC in Backup Header.
+08:10:38 
+
+	Looking for 'gpt_backup1.bin'
+08:10:38 	----------------------------------------
+08:10:38 	Searching '/local/mnt/workspace/CRMBuilds/BOOT.AK.1.0-00234-C-1_20160825_080620/b/boot_images/build/ms/bin/AAAAANAA/AP145_EMMC'
+08:10:38 
+	**Found gpt_backup1.bin (16896 bytes)
+08:10:38 Opened gpt_backup1.bin, cwd=/local/mnt/workspace/CRMBuilds/BOOT.AK.1.0-00234-C-1_20160825_080620/b/boot_images/build/ms/bin/AAAAANAA/AP145_EMMC
+08:10:38 moving to sector 32 (byte location 16384)
+08:10:38 success was able to read len(bytes_read)=512
+08:10:38 At sector 32 (0x4000) file_sector_offset 16 (0x10) in gpt_backup1.bin with 0 (0x0)
+08:10:38 Patch value:0
+08:10:38 (little endian)
+08:10:38 committing patch of length 512 bytes
+08:10:38 CLOSED 'gpt_backup1.bin'
+08:10:38 You're on LINUX! I'm performing a SYNC for you
+08:10:39 PATCH:
+08:10:39 DONE
+
+08:10:39 WARNING 'gpt_backup1.bin' for physical_partition_number=1 (only 0 is accessible) - THIS MIGHT FAIL
+08:10:39 
+------------------------------------------------------------------------------
+08:10:39 PATCH: (gpt_backup1.bin) Update Backup Header with CRC of Backup Header.
+08:10:39 
+
+	Looking for 'gpt_backup1.bin'
+08:10:39 	----------------------------------------
+08:10:39 	Searching '/local/mnt/workspace/CRMBuilds/BOOT.AK.1.0-00234-C-1_20160825_080620/b/boot_images/build/ms/bin/AAAAANAA/AP145_EMMC'
+08:10:39 
+	**Found gpt_backup1.bin (16896 bytes)
+08:10:39 Opened gpt_backup1.bin, cwd=/local/mnt/workspace/CRMBuilds/BOOT.AK.1.0-00234-C-1_20160825_080620/b/boot_images/build/ms/bin/AAAAANAA/AP145_EMMC
+08:10:39 	CRC32(32,92) requested 
+08:10:39 moving to sector 32 (byte location 16384)
+08:10:39 	Move Successful 
+08:10:39 	Trying to read 92 bytes in gpt_backup1.bin
+08:10:39 	len(bytes_read)=
+08:10:39 	CRC32=0x3918A6B5
+08:10:39 moving to sector 32 (byte location 16384)
+08:10:39 success was able to read len(bytes_read)=512
+08:10:39 At sector 32 (0x4000) file_sector_offset 16 (0x10) in gpt_backup1.bin with 957916853 (0x3918A6B5)
+08:10:39 Patch value:957916853
+08:10:39 (little endian)
+08:10:39 committing patch of length 512 bytes
+08:10:39 CLOSED 'gpt_backup1.bin'
+08:10:39 You're on LINUX! I'm performing a SYNC for you
+08:10:39 PATCH:
+08:10:39 DONE
+
+08:10:39 WARNING 'DISK' for physical_partition_number=1 (only 0 is accessible) - THIS MIGHT FAIL
+08:10:39 WARNING 'DISK' for physical_partition_number=1 (only 0 is accessible) - THIS MIGHT FAIL
+08:10:39 Done patching
+08:10:39 	                                                     _            
+08:10:39 	                                                    (_)            
+08:10:39 	 _ __  _ __ ___   __ _ _ __ __ _ _ __ ___  _ __ ___  _ _ __   __ _ 
+08:10:39 	| '_ \| '__/ _ \ / _` | '__/ _` | '_ ` _ \| '_ ` _ \| | '_ \ / _` |
+08:10:39 	| |_) | | | (_) | (_| | | | (_| | | | | | | | | | | | | | | | (_| |
+08:10:39 	| .__/|_|  \___/ \__, |_|  \__,_|_| |_| |_|_| |_| |_|_|_| |_|\__, |
+08:10:39 	| |               __/ |                                       __/ |
+08:10:39 	|_|              |___/                                       |___/ 
+08:10:39 	                          _             
+08:10:39 	                         (_)            
+08:10:39 	__      ____ _ _ __ _ __  _ _ __   __ _ 
+08:10:39 	\ \ /\ / / _` | '__| '_ \| | '_ \ / _` |
+08:10:39 	 \ V  V / (_| | |  | | | | | | | | (_| |
+08:10:39 	  \_/\_/ \__,_|_|  |_| |_|_|_| |_|\__, |
+08:10:39 	                                   __/ |
+08:10:39 	                                  |___/ 
+
+08:10:39 WARNING: 'gpt_main1.bin' for physical_partition_number=1 (only 0 is accessible) THIS MIGHT FAIL
+08:10:39 WARNING 'gpt_main1.bin' for physical_partition_number=1 (only 0 is accessible) THIS MIGHT FAIL
+08:10:39 WARNING 'gpt_main1.bin' for physical_partition_number=1 (only 0 is accessible) THIS MIGHT FAIL
+08:10:39 WARNING 'gpt_main1.bin' for physical_partition_number=1 (only 0 is accessible) THIS MIGHT FAIL
+08:10:39 
+==============================================================================
+08:10:39 ==============================================================================
+08:10:39 
+
+	Looking for 'gpt_main1.bin'
+08:10:39 	----------------------------------------
+08:10:39 	Searching '/local/mnt/workspace/CRMBuilds/BOOT.AK.1.0-00234-C-1_20160825_080620/b/boot_images/build/ms/bin/AAAAANAA/AP145_EMMC'
+08:10:39 
+	**Found gpt_main1.bin (17408 bytes)
+08:10:39 
+'gpt_main1.bin' (17.00 KB) to partition 'PrimaryGPT' at sector 0 (at 0 B)
+
+08:10:39 	Attempting to move to sector 0 (file file_sector_offset) in gpt_main1.bin
+08:10:39 	Attempting to read 17408 bytes
+08:10:39 	Successfully read 17408 bytes of 17408 bytes and closed gpt_main1.bin
+08:10:39 opfile = open('singleimage.bin', 'r+b') , cwd=/local/mnt/workspace/CRMBuilds/BOOT.AK.1.0-00234-C-1_20160825_080620/b/boot_images/build/ms/bin/AAAAANAA/AP145_EMMC
+08:10:39 
+	Opened singleimage.bin
+08:10:39 	File can be written completely.
+08:10:39 	Calling opfile.write(bytes_read)
+08:10:39 	SingleImageSize 17408 bytes (34 sectors)
+08:10:39 	CurrentSector=34
+08:10:39 	DiskSize=61997056 sectors
+08:10:39 
+	Written with
+08:10:39 	python dd.py --if=gpt_main1.bin --bs=512 --count=34 --seek=0 --of=singleimage.bin
+08:10:39 
+	Verify with
+08:10:39 	python dd.py --if=singleimage.bin --bs=512 --count=34 --skip=0 --of=dump.bin
+08:10:39 
+	Successfully wrote "gpt_main1.bin" (17.00 KB payload) to singleimage.bin
+08:10:39 	                          _             
+08:10:39 	                         (_)            
+08:10:39 	__      ____ _ _ __ _ __  _ _ __   __ _ 
+08:10:39 	\ \ /\ / / _` | '__| '_ \| | '_ \ / _` |
+08:10:39 	 \ V  V / (_| | |  | | | | | | | | (_| |
+08:10:39 	  \_/\_/ \__,_|_|  |_| |_|_|_| |_|\__, |
+08:10:39 	                                   __/ |
+08:10:39 	                                  |___/ 
+
+08:10:39 WARNING: 'openwrt-ipq806x-3.4-uImage' for physical_partition_number=1 (only 0 is accessible) THIS MIGHT FAIL
+08:10:39 WARNING 'openwrt-ipq806x-3.4-uImage' for physical_partition_number=1 (only 0 is accessible) THIS MIGHT FAIL
+08:10:39 WARNING 'openwrt-ipq806x-3.4-uImage' for physical_partition_number=1 (only 0 is accessible) THIS MIGHT FAIL
+08:10:39 WARNING 'openwrt-ipq806x-3.4-uImage' for physical_partition_number=1 (only 0 is accessible) THIS MIGHT FAIL
+08:10:39 
+==============================================================================
+08:10:39 ==============================================================================
+08:10:39 
+
+	Looking for 'openwrt-ipq806x-3.4-uImage'
+08:10:39 	----------------------------------------
+08:10:39 	Searching '/local/mnt/workspace/CRMBuilds/BOOT.AK.1.0-00234-C-1_20160825_080620/b/boot_images/build/ms/bin/AAAAANAA/AP145_EMMC'
+08:10:39 	Cound't find file OR perhaps you don't have permission to run os.stat() on this file
+
+08:10:39 
+'openwrt-ipq806x-3.4-uImage' (0 B) to partition '0:HLOS' at sector 34 (at 17.00 KB)
+
+08:10:39 	______      _   _        ___  
+08:10:39 	| ___ \    | | | |      |__ \ 
+08:10:39 	| |_/ /__ _| |_| |__       ) |
+08:10:39 	|  __// _` | __| '_ \     / / 
+08:10:39 	| |  | (_| | |_| | | |   |_|  
+08:10:39 	\_|   \__,_|\__|_| |_|   (_)  
+
+
+08:10:39 WARNING: 'openwrt-ipq806x-3.4-uImage' listed in '/local/mnt/workspace/CRMBuilds/BOOT.AK.1.0-00234-C-1_20160825_080620/b/boot_images/build/ms/bin/AAAAANAA/AP145_EMMC/rawprogram1.xml' not found
+
+08:10:39 
+Use option -s c:\path1 -s c:\path2 etc
+08:10:39 	 _________________ ___________ 
+08:10:39 	|  ___| ___ \ ___ \  _  | ___ \
+08:10:39 	| |__ | |_/ / |_/ / | | | |_/ /
+08:10:39 	|  __||    /|    /| | | |    / 
+08:10:39 	| |___| |\ \| |\ \\ \_/ / |\ \ 
+08:10:39 	\____/\_| \_\_| \_|\___/\_| \_|
+
+08:10:39 
+ERROR - ERROR - ERROR - ERROR - ERROR
+
+08:10:39 
+msp.py failed - Log is log_msp.txt
+
+
