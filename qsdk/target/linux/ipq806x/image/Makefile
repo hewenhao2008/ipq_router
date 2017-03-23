@@ -174,9 +174,14 @@ define Image/Build/squashfs
 	$(call prepare_generic_squashfs,$(KDIR)/root.squashfs)
 endef
 
+define Image/Build/Project/HD_Router
+	echo build HD_Router project $(1)
+endef
+
 define Image/Build
 	$(call Image/Build/$(1),$(1))
 	dd if=$(KDIR)/root$(2).$(1) of=$(BIN_DIR)/$(IMG_PREFIX)$(2)-$(1)-root$(3).img bs=2k conv=sync
+	$(call Image/Build/Project/$(PR_NAME),$(1))
 endef
 
 $(eval $(call BuildImage))
