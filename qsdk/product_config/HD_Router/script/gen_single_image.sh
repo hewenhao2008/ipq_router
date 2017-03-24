@@ -1,11 +1,12 @@
 
 QSDK_PATH=$1
 SCRIPT_PATH=$2
-QCS_SPF_PATH=$QSDK_PATH/target/linux/ipq806x/image/qca-networking-2016-spf-4-0_qca_oem.git/
+QCS_SPF_PATH=$QSDK_PATH/target/linux/ipq806x/image/qca-networking-2016-spf-4-0_qca_oem.git
 
 #cd $QCS_SPF_PATH
 
 echo "copy files to build dir..."
+mkdir -p $QCS_SPF_PATH/IPQ4019.ILQ.4.0/common/build/ipq
 cp -rf $QSDK_PATH/qca/src/uboot-1.0/tools/pack.py $QCS_SPF_PATH/NHSS.QSDK.4.0/apss_proc/out/
 cp -rf $QSDK_PATH/bin/ipq806x/openwrt* $QCS_SPF_PATH/IPQ4019.ILQ.4.0/common/build/ipq
 
@@ -27,7 +28,7 @@ python update_common_info.py
 
 cp -f bin/nand-ipq40xx-single.img $QSDK_PATH/bin/$3
 rm -rf $QCS_SPF_PATH/IPQ4019.ILQ.4.0/common/build/bin/*
-rm -rf $QCS_SPF_PATH/IPQ4019.ILQ.4.0/common/build/ipq/*
+rm -rf $QCS_SPF_PATH/IPQ4019.ILQ.4.0/common/build/ipq
 rm -rf $QCS_SPF_PATH/IPQ4019.ILQ.4.0/common/build/update_common*.log
 cd $QSDK_PATH
 
