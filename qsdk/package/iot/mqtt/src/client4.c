@@ -230,7 +230,7 @@ int main(int argc, char* argv[])
 	rc = mosquitto_connect(mosq_ext, cfg.ext_host, cfg.ext_port, 60);
 	if(rc){
 		fprintf(stderr, "Error: %s\n", mosquitto_strerror(rc));
-		return rc;
+		//return rc;
 	}
 
 //	rc = mosquitto_loop_forever(mosq_ext, -1, 1);
