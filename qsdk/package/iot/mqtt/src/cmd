@@ -1,0 +1,13 @@
+{
+	"client": "android",
+	"timestamp": 1487236771,
+	"version": 1.1,
+	"client_version":"android5.0",
+	"user_agent": "huawei",
+	"token": "adfljas",
+	"req_id": 178237278,
+	"method": "set_zigbee_bulb",
+    	"params": {
+		"cmd":"add_device"
+     		}
+}
