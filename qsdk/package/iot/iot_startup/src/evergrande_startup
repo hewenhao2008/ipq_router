@@ -11,5 +11,7 @@ start() {
 }
 
 stop() {
+	killall -9 iot_event_loop
 	#killall -9 zigbee-mgmt
+
 }
