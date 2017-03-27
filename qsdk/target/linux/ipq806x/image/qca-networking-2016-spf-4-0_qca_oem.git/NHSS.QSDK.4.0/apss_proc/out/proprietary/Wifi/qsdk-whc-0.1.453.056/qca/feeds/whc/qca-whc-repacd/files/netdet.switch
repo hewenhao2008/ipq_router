@@ -1,0 +1,11 @@
+#!/bin/sh
+# Copyright (c) 2016 Qualcomm Atheros, Inc.
+#
+# All Rights Reserved.
+# Qualcomm Atheros Confidential and Proprietary.
+
+if [ "$EVENT" == "direction" ] && [ "$STATE" == "upstream" ]; then
+    logger -t hotplug-switch -p user.info "detecting mode because port $PORT is $STATE"
+    pkill -9 -f repacd-detect_device_mode.sh
+    repacd-detect_device_mode.sh &
+fi

@@ -500,11 +500,7 @@ define BuildImage
 	@touch $$@
 
   install: kernel_prepare
-	$(foreach fs,$(TARGET_FILESYSTEMS),
-		$(call Image/Build,$(fs))
-	)
 	$(call Image/mkfs/ubifs_fit,-$(CONFIG_TARGET_DTS_PREFIX))
-	$(call Image/mkfs/ubifs)
 	$(call Image/Checksum,md5sum --binary,md5sums)
 	$(call Image/Checksum,openssl dgst -sha256,sha256sums)
 
